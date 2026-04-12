@@ -805,6 +805,8 @@
                         <div class="analytics-card-item"><div class="analytics-label">Avg Task Time</div><div class="analytics-value" id="ana-avg">0m 0s</div></div>
                         <div class="analytics-card-item"><div class="analytics-label">⚡ Velocity (tasks/h)</div><div class="analytics-value" id="velocityValue">0.0</div></div>
                         <div class="analytics-card-item"><div class="analytics-label">📈 Efficiency % (actual vs AET)</div><div class="analytics-value" id="efficiencyValue">0.0%</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">💰 Weekly Earnings</div><div class="analytics-value" id="weeklyearned">$0.00</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">💵 Today's Earnings</div><div class="analytics-value" id="dailyearned">$0.00</div></div>
                     </div>
                 </div>
             </div>
@@ -1022,7 +1024,70 @@
         if(todaySec >= targetSec && targetSec>0) document.getElementById('goalEmoji').innerHTML = "✅ Goal met! 🎉";
         else document.getElementById('goalEmoji').innerHTML = "⚡";
         checkBreakThreshold(getTotalTodaySecIncludingCurrent());
+        updateEarnings();
     }
+
+    function updateEarnings() {
+    const logs = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
+    const now = new Date();
+
+    // Helper: format a Date object as YYYY-MM-DD in LOCAL time
+    function toLocalDateString(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    const todayLocal = toLocalDateString(now);
+
+    // Get start of week (Sunday) in LOCAL time
+    const dayOfWeek = now.getDay(); // 0 = Sunday
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - dayOfWeek);
+    const startOfWeekLocal = toLocalDateString(startOfWeek);
+
+    // Get end of week (Saturday)
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const endOfWeekLocal = toLocalDateString(endOfWeek);
+
+    let weeklySecs = 0;
+    let dailySecs = 0;
+
+    logs.forEach(log => {
+        // Use the stored local date string (e.g., "4/13/2026")
+        const localDateStr = log.date;
+        if (!localDateStr) return;
+
+        // Convert to YYYY-MM-DD for easy comparison
+        const parts = localDateStr.split('/');
+        if (parts.length !== 3) return;
+        const year = parts[2];
+        const month = parts[0].padStart(2, '0');
+        const day = parts[1].padStart(2, '0');
+        const logDateISO = `${year}-${month}-${day}`;
+
+        const secs = log.sec || 0;
+
+        if (logDateISO >= startOfWeekLocal && logDateISO <= endOfWeekLocal) {
+            weeklySecs += secs;
+        }
+        if (logDateISO === todayLocal) {
+            dailySecs += secs;
+        }
+    });
+
+    const rate = 14;
+    const weeklyEarned = (weeklySecs / 3600) * rate;
+    const dailyEarned = (dailySecs / 3600) * rate;
+
+    const weeklyElem = document.getElementById('weeklyearned');
+    const dailyElem = document.getElementById('dailyearned');
+    if (weeklyElem) weeklyElem.textContent = `$${weeklyEarned.toFixed(2)}`;
+    if (dailyElem) dailyElem.textContent = `$${dailyEarned.toFixed(2)}`;
+}
+
     function wipe() { if(confirm("Wipe all history?")){ localStorage.removeItem('raterLog_v9'); renderTableAndStats(); } }
     async function exportCSV() { let logs = JSON.parse(localStorage.getItem('raterLog_v9'))||[]; if(!logs.length) return alert("No data"); let rows=[["Date","Time","Duration","Query","PQ","NM","Notes","Justification","AET_sec"]]; logs.forEach(l=>{ rows.push([`"${l.date}"`,`"${l.time||''}"`,`"${l.duration}"`,`"${l.query.replace(/"/g,'""')}"`,`"${l.pq}"`,`"${l.nm}"`,`"${(l.notes||'').replace(/"/g,'""')}"`,`"${(l.justification||'').replace(/"/g,'""')}"`,l.aetSec||300]); }); let csv=rows.map(r=>r.join(",")).join("\n"); let defaultName=`rater_log_${new Date().toISOString().slice(0,10)}.csv`; if('showSaveFilePicker' in window){ try{ let handle=await window.showSaveFilePicker({suggestedName:defaultName,types:[{description:'CSV',accept:{'text/csv':['.csv']}}]}); let writable=await handle.createWritable(); await writable.write(csv); await writable.close(); alert("✅ Exported"); }catch(e){} } else{ let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=defaultName; a.click(); URL.revokeObjectURL(a.href); alert("✅ Exported"); } }
     function parseCSV(txt){ let rows=[]; let inQuote=false, cur=[], field=""; for(let i=0;i<txt.length;i++){ let ch=txt[i]; if(ch==='"'){ if(inQuote && txt[i+1]==='"'){ i++; field+='"'; } else inQuote=!inQuote; } else if(ch===',' && !inQuote){ cur.push(field); field=""; } else if(ch==='\n' && !inQuote){ cur.push(field); if(cur.length>1 || cur[0]!=="") rows.push(cur); cur=[]; field=""; } else field+=ch; } if(field||cur.length){ cur.push(field); if(cur.length) rows.push(cur); } return rows.map(r=>r.map(f=>f.trim().replace(/^"|"$/g,''))); }
