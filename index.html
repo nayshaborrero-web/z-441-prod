@@ -61,6 +61,9 @@
             border-bottom: 2px solid var(--accent);
             flex-wrap: wrap;
             gap: 12px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
         .timer-section {
             display: flex;
@@ -457,22 +460,130 @@
             border-radius: 8px;
             font-size: 0.7rem;
         }
-        @media (max-width: 780px) {
-            .dashboard-main { flex-direction: column; }
-            .sidebar { width: 35%; }
-            .header-bar { flex-direction: column; align-items: stretch; text-align: center; }
-            #timer-display { font-size: 1.6rem; }
-            .btn { padding: 12px; font-size: 0.8rem; }
-            .analytics-grid { grid-template-columns: 1fr; }
-            .dev-panel { flex-direction: column; align-items: stretch; }
-            .goal-header { flex-direction: column; align-items: stretch; }
-            .research-row { flex-direction: column; }
-            .research-row button { width: 100%; white-space: normal; }
+        /* ========== MOBILE RESPONSIVE OVERHAUL (max-width: 768px) ========== */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+                height: auto;
+                overflow: auto;
+            }
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid #334155;
+                max-height: none;
+                overflow-y: auto;
+            }
+            .main-content {
+                width: 100%;
+                height: auto;
+                overflow: visible;
+            }
+            .header-bar {
+                position: sticky;
+                top: 0;
+                flex-direction: column;
+                align-items: stretch;
+                text-align: center;
+                z-index: 200;
+                background: #1e293b;
+                padding: 12px 16px;
+            }
+            .timer-section {
+                justify-content: center;
+            }
+            #timer-display {
+                font-size: 1.8rem;
+            }
+            .header-bar > div:last-child {
+                text-align: center;
+            }
+            /* 2x2 grid for action buttons */
+            .header-bar > div:has(> button), 
+            .header-bar div[style*="display:flex; gap:10px;"] {
+                display: grid !important;
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+            }
+            .header-bar .btn {
+                width: 100%;
+                text-align: center;
+                justify-content: center;
+            }
+            .dashboard-main {
+                flex-direction: column;
+                gap: 16px;
+            }
+            .input-panel, .output-panel {
+                width: 100%;
+                min-width: auto;
+            }
+            .card {
+                padding: 14px;
+            }
+            .slider-row {
+                margin-bottom: 20px;
+            }
+            input[type="range"] {
+                min-height: 44px;
+                height: 44px;
+            }
+            .res-row {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .analytics-grid {
+                grid-template-columns: 1fr;
+            }
+            .research-row {
+                flex-direction: column;
+            }
+            .research-row button {
+                width: 100%;
+                white-space: normal;
+            }
+            .goal-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .goal-setter {
+                justify-content: space-between;
+            }
+            .history-header-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-history {
+                width: 100%;
+            }
+            .btn-io {
+                padding: 12px;
+            }
+            .dev-panel {
+                flex-direction: column;
+                align-items: stretch;
+                margin: 8px 12px 0 12px;
+            }
+            .dashboard-scroll-area {
+                padding: 16px;
+            }
+            .hotkey-block {
+                margin-bottom: 16px;
+            }
         }
-        @media (max-width: 580px) {
-            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #334155; height: auto; max-height: 40vh; }
-            body { flex-direction: column; }
-            .main-content { height: 60vh; }
+        @media (max-width: 480px) {
+            .header-bar .btn {
+                font-size: 0.75rem;
+                padding: 10px;
+            }
+            #timer-display {
+                font-size: 1.5rem;
+            }
+            .submit-badge {
+                font-size: 0.7rem;
+                white-space: normal;
+                text-align: center;
+            }
         }
         #devToggleBtn {
             background: none;
@@ -806,6 +917,7 @@
     function startTimer() { if(!isRunning){ initAudio(); isRunning=true; if(timerInterval) clearInterval(timerInterval); timerInterval=setInterval(()=>{ seconds++; document.getElementById('timer-display').innerText=formatHMS(seconds); let aetVal=parseFloat(document.getElementById('aet').value)*60; if(aetVal-seconds<=30 && aetVal-seconds>0){ document.getElementById('timer-display').style.color='var(--danger)'; if(!alertPlayed){ playAlert(); alertPlayed=true; } } else if(seconds>=aetVal) document.getElementById('timer-display').style.color='var(--danger)'; else document.getElementById('timer-display').style.color='var(--success)'; updateSubmissionStatus(); saveState(); checkBreakThreshold(getTotalTodaySecIncludingCurrent()); },1000); } }
     function pauseTimer() { clearInterval(timerInterval); isRunning=false; saveState(); updateSubmissionStatus(); }
     
+    // FIX 2: Capture wall-clock time properly and store as 'time' field
     function finishAndLog() {
         if(seconds<=0){ alert("Start timer first."); return; }
         let statusElem = document.getElementById('submitStatusBadge');
@@ -816,9 +928,10 @@
         let now = new Date();
         let dateISO = now.toISOString().slice(0,10);
         let dateLocal = now.toLocaleDateString();
+        let wallTime = now.toLocaleTimeString([], { hour: '2-digit', minute:'2-digit' });
         let justificationText = document.getElementById('just-box').value;
         let logEntry = {
-            date: dateLocal, dateISO: dateISO, time: now.toLocaleTimeString(), duration: formatHMS(seconds),
+            date: dateLocal, dateISO: dateISO, time: wallTime, duration: formatHMS(seconds),
             query: document.getElementById('q-name').value.trim()||"Unnamed",
             pq: document.getElementById('out-pq').innerText,
             nm: document.getElementById('out-nm').innerText,
@@ -870,7 +983,65 @@
     function wipe() { if(confirm("Wipe all history?")){ localStorage.removeItem('raterLog_v9'); renderTableAndStats(); } }
     async function exportCSV() { let logs = JSON.parse(localStorage.getItem('raterLog_v9'))||[]; if(!logs.length) return alert("No data"); let rows=[["Date","Time","Duration","Query","PQ","NM","Notes","Justification","AET_sec"]]; logs.forEach(l=>{ rows.push([`"${l.date}"`,`"${l.time||''}"`,`"${l.duration}"`,`"${l.query.replace(/"/g,'""')}"`,`"${l.pq}"`,`"${l.nm}"`,`"${(l.notes||'').replace(/"/g,'""')}"`,`"${(l.justification||'').replace(/"/g,'""')}"`,l.aetSec||300]); }); let csv=rows.map(r=>r.join(",")).join("\n"); let defaultName=`rater_log_${new Date().toISOString().slice(0,10)}.csv`; if('showSaveFilePicker' in window){ try{ let handle=await window.showSaveFilePicker({suggestedName:defaultName,types:[{description:'CSV',accept:{'text/csv':['.csv']}}]}); let writable=await handle.createWritable(); await writable.write(csv); await writable.close(); alert("✅ Exported"); }catch(e){} } else{ let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=defaultName; a.click(); URL.revokeObjectURL(a.href); alert("✅ Exported"); } }
     function parseCSV(txt){ let rows=[]; let inQuote=false, cur=[], field=""; for(let i=0;i<txt.length;i++){ let ch=txt[i]; if(ch==='"'){ if(inQuote && txt[i+1]==='"'){ i++; field+='"'; } else inQuote=!inQuote; } else if(ch===',' && !inQuote){ cur.push(field); field=""; } else if(ch==='\n' && !inQuote){ cur.push(field); if(cur.length>1 || cur[0]!=="") rows.push(cur); cur=[]; field=""; } else field+=ch; } if(field||cur.length){ cur.push(field); if(cur.length) rows.push(cur); } return rows.map(r=>r.map(f=>f.trim().replace(/^"|"$/g,''))); }
-    function importLog(e){ let file=e.target.files[0]; if(!file) return; let reader=new FileReader(); reader.onload=function(ev){ let rows=parseCSV(ev.target.result); if(rows.length<2) return alert("Invalid CSV"); let headers=rows[0].map(h=>h.toLowerCase()); let dateIdx=headers.indexOf('date'), durIdx=headers.indexOf('duration'), aetIdx=headers.indexOf('aet_sec'); if(dateIdx===-1||durIdx===-1) return alert("Need Date & Duration columns"); let imported=[]; for(let i=1;i<rows.length;i++){ let r=rows[i]; if(r.length<=Math.max(dateIdx,durIdx)) continue; let durRaw=r[durIdx]||"", secs=0, parts=durRaw.split(':'); if(parts.length===3) secs=parseInt(parts[0])*3600+parseInt(parts[1])*60+parseInt(parts[2]); else if(parts.length===2) secs=parseInt(parts[0])*60+parseInt(parts[1]); let aetVal=aetIdx!==-1&&r[aetIdx]?parseInt(r[aetIdx]):300; let rawDate = r[dateIdx]; let parsedISO = (()=>{ try{ let d=new Date(rawDate); return isNaN(d)?null:d.toISOString().slice(0,10); }catch(e){ return null; } })(); imported.push({ date:rawDate, dateISO:parsedISO, time:"", duration:durRaw, query:r[headers.indexOf('query')]||"Imported", pq:r[headers.indexOf('pq')]||"N/A", nm:r[headers.indexOf('nm')]||"N/A", sec:secs||0, notes:r[headers.indexOf('notes')]||"", justification:r[headers.indexOf('justification')]||"", aetSec:aetVal }); } if(imported.length){ localStorage.setItem('raterLog_v9',JSON.stringify(imported)); renderTableAndStats(); alert(`Imported ${imported.length} entries`); } else alert("No valid rows"); }; reader.readAsText(file,"UTF-8"); }
+    
+    // FIX 1: Enhanced CSV import with robust date matching for daily totals
+    function importLog(e){
+        let file=e.target.files[0];
+        if(!file) return;
+        let reader=new FileReader();
+        reader.onload=function(ev){
+            let rows=parseCSV(ev.target.result);
+            if(rows.length<2) return alert("Invalid CSV");
+            let headers=rows[0].map(h=>h.toLowerCase());
+            let dateIdx=headers.indexOf('date'), durIdx=headers.indexOf('duration'), aetIdx=headers.indexOf('aet_sec');
+            if(dateIdx===-1||durIdx===-1) return alert("Need Date & Duration columns");
+            let todayStr = new Date().toLocaleDateString();
+            let imported=[];
+            for(let i=1;i<rows.length;i++){
+                let r=rows[i];
+                if(r.length<=Math.max(dateIdx,durIdx)) continue;
+                let durRaw=r[durIdx]||"", secs=0, parts=durRaw.split(':');
+                if(parts.length===3) secs=parseInt(parts[0])*3600+parseInt(parts[1])*60+parseInt(parts[2]);
+                else if(parts.length===2) secs=parseInt(parts[0])*60+parseInt(parts[1]);
+                let aetVal=aetIdx!==-1&&r[aetIdx]?parseInt(r[aetIdx]):300;
+                let rawDate = r[dateIdx];
+                let parsedISO = null;
+                try{
+                    let d=new Date(rawDate);
+                    if(!isNaN(d)) parsedISO = d.toISOString().slice(0,10);
+                }catch(e){}
+                if(!parsedISO && rawDate.match(/\d{1,2}\/\d{1,2}\/\d{4}/)){
+                    let partsDate = rawDate.split('/');
+                    if(partsDate.length===3){
+                        let d2=new Date(partsDate[2], partsDate[0]-1, partsDate[1]);
+                        if(!isNaN(d2)) parsedISO = d2.toISOString().slice(0,10);
+                    }
+                }
+                imported.push({
+                    date: rawDate,
+                    dateISO: parsedISO,
+                    time: r[headers.indexOf('time')] || "Imported",
+                    duration: durRaw,
+                    query: r[headers.indexOf('query')]||"Imported",
+                    pq: r[headers.indexOf('pq')]||"N/A",
+                    nm: r[headers.indexOf('nm')]||"N/A",
+                    sec: secs||0,
+                    notes: r[headers.indexOf('notes')]||"",
+                    justification: r[headers.indexOf('justification')]||"",
+                    aetSec: aetVal
+                });
+            }
+            if(imported.length){
+                let existing = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
+                let merged = [...imported, ...existing];
+                localStorage.setItem('raterLog_v9',JSON.stringify(merged));
+                renderTableAndStats();
+                alert(`Imported ${imported.length} entries. Daily totals recalculated.`);
+            } else alert("No valid rows");
+        };
+        reader.readAsText(file,"UTF-8");
+    }
+    
     function escapeHtml(s){ return String(s).replace(/[&<>]/g,function(m){ return m==='&'?'&amp;':m==='<'?'&lt;':'&gt;';}); }
     function setDailyGoal(){ let g=parseFloat(document.getElementById('dailyGoalHours').value); if(isNaN(g)||g<0)g=6; if(g>16)g=16; localStorage.setItem('dailyGoalHours',g); updateGoalDisplay(); renderTableAndStats(); }
     function updateGoalDisplay(){ let goal=parseFloat(localStorage.getItem('dailyGoalHours')||'6'); document.getElementById('goalTargetText').innerText=`${goal.toFixed(1)}h`; document.getElementById('dailyGoalHours').value=goal; }
