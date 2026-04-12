@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
+    <title>Rater Dashboard v1.9 | Telus YMYL Caps + Submission Readiness + Persistence</title>
+    <!-- PWA Meta Tags & Icons -->
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Rater Dashboard">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%238b5cf6'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white' font-weight='bold'%3ERD%3C/text%3E%3C/svg%3E">
+    <link rel="manifest" href="manifest.json">
+    <style>
+        * { box-sizing: border-box; }
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --accent: #8b5cf6;
+            --text: #f1f5f9;
+            --nm: #3b82f6;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --trust-gold: #fbbf24;
+            --break-bg: #0f172a;
+            --break-text: #fbbf24;
+            --goal-bg: #334155;
+            --goal-fill: #10b981;
+        }
+        body {
+            font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 22%;
+            padding: 20px;
+            background: #111827;
+            border-right: 1px solid #334155;
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex-shrink: 0;
+        }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        .header-bar {
+            background: #1e293b;
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--accent);
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .timer-section {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        #timer-display {
+            font-family: 'Courier New', monospace;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--success);
+            letter-spacing: 2px;
+            transition: color 0.1s ease;
+        }
+        .submit-badge {
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 40px;
+            background: #334155;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .submit-badge.red { background: #7f1a1a; color: #ffb3b3; border-left: 3px solid var(--danger); }
+        .submit-badge.yellow { background: #78350f; color: #ffdd99; border-left: 3px solid var(--warning); }
+        .submit-badge.green { background: #064e3b; color: #a7f3d0; border-left: 3px solid var(--success); }
+        .dashboard-scroll-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .dashboard-main {
+            display: flex;
+            gap: 25px;
+            align-items: flex-start;
+            flex-wrap: wrap;
+        }
+        .input-panel { flex: 1.1; min-width: 260px; }
+        .output-panel { flex: 1; min-width: 280px; }
+        .card-header-out {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            display: block;
+        }
+        .card-divider { height: 1px; background: #334155; margin-bottom: 12px; }
+        .card {
+            background: #1e293b;
+            padding: 18px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #334155;
+        }
+        .slider-row { margin-bottom: 15px; }
+        .label-box {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .description {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin: -2px 0 6px 0;
+            line-height: 1.2;
+            opacity: 0.8;
+        }
+        input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; min-height: 44px; }
+        .trust-glow { box-shadow: 0 0 12px var(--trust-gold); border: 2px solid var(--trust-gold) !important; padding: 4px; border-radius: 4px; }
+        .res-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .res-box {
+            background: var(--bg);
+            padding: 12px;
+            border-radius: 8px;
+            border: 2px solid var(--accent);
+            text-align: center;
+        }
+        .res-val { font-size: 1.1rem; font-weight: 800; display: block; margin-top: 5px; color: #fff; }
+        .btn {
+            padding: 12px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+            font-size: 0.85rem;
+        }
+        .btn-io {
+            background: #334155;
+            color: white;
+            font-size: 0.75rem;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 12px;
+        }
+        .history-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        .search-history {
+            background: #0f172a;
+            border: 1px solid #475569;
+            border-radius: 40px;
+            padding: 8px 16px;
+            width: 260px;
+            color: white;
+        }
+        .history-table-card {
+            background: #0b0f1a;
+            border-radius: 8px;
+            border: 1px solid #334155;
+            max-height: 250px;
+            overflow-y: auto;
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th { background: #1e293b; color: var(--accent); text-align: left; padding: 12px; position: sticky; top: 0; }
+        td { padding: 10px; border-bottom: 1px solid #1e293b; }
+        .def-box {
+            margin-bottom: 10px;
+            line-height: 1.4;
+            border-left: 3px solid var(--accent);
+            padding-left: 10px;
+            font-size: 0.75rem;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+        .mobile-block {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid var(--nm);
+            color: var(--nm);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        .timing-block {
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .hotkey-block {
+            background: rgba(139, 92, 246, 0.12);
+            border: 1px solid var(--accent);
+            padding: 16px 18px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            margin-top: 16px;
+            transition: all 0.2s;
+        }
+        .hotkey-block strong {
+            display: block;
+            margin-bottom: 16px;
+            font-size: 0.85rem;
+            letter-spacing: 0.3px;
+            color: var(--accent);
+        }
+        .hotkey-item {
+            margin-bottom: 16px;
+            line-height: 1.5;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .hotkey-item:last-child { margin-bottom: 0; }
+        .hotkey-block kbd {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 5px 12px;
+            font-family: 'Courier New', 'SF Mono', monospace;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #fbbf24;
+            border: 1px solid var(--accent);
+            margin-right: 8px;
+            display: inline-block;
+            box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+        }
+        .goal-container {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 12px;
+            margin-top: 8px;
+            border: 1px solid #334155;
+        }
+        .goal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .goal-setter {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #1e293b;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .goal-setter input {
+            width: 60px;
+            background: #0f172a;
+            border: 1px solid var(--accent);
+            color: white;
+            border-radius: 6px;
+            padding: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .goal-setter button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+        .progress-bar-bg {
+            background-color: var(--goal-bg);
+            border-radius: 20px;
+            height: 12px;
+            width: 100%;
+            overflow: hidden;
+            margin: 8px 0 4px;
+        }
+        .progress-fill {
+            background-color: var(--goal-fill);
+            width: 0%;
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.3s ease;
+        }
+        .goal-stats {
+            font-size: 0.7rem;
+            display: flex;
+            justify-content: space-between;
+            color: #94a3b8;
+        }
+        .pq-rule-box {
+            border-left: 3px solid #ff5555 !important;
+            background: rgba(255, 80, 80, 0.15);
+            color: white !important;
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-radius: 4px;
+        }
+        .ymyl-warning {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 4px solid #ef4444;
+            padding: 8px 12px;
+            margin-top: 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fca5a5;
+        }
+        .dev-panel {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 12px 20px;
+            margin: 8px 20px 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+            border: 1px solid #334155;
+        }
+        .dev-panel strong {
+            color: var(--accent);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        .dev-panel button {
+            background: #0f172a;
+            border: 1px solid var(--accent);
+            color: white;
+            border-radius: 40px;
+            padding: 6px 16px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .dev-panel button:hover {
+            background: var(--accent);
+            color: #0f172a !important;
+            transform: translateY(-1px);
+        }
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 6px;
+        }
+        .analytics-card-item {
+            background: #0f172a;
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+        .analytics-label {
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+        .analytics-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .internal-notes {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid #475569;
+            color: white;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 0.8rem;
+            margin-top: 8px;
+            resize: vertical;
+        }
+        .break-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95);
+            backdrop-filter: blur(12px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            visibility: hidden;
+        }
+        .break-modal .modal-card {
+            background: #1e293b;
+            border-radius: 32px;
+            padding: 40px;
+            max-width: 500px;
+            text-align: center;
+            border: 2px solid var(--trust-gold);
+        }
+        .research-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: stretch;
+        }
+        .research-row button {
+            flex: 1 1 auto;
+            min-width: 70px;
+            white-space: nowrap;
+        }
+        .last-just-card {
+            background: #0f172a;
+            border-left: 3px solid var(--accent);
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+        }
+        @media (max-width: 780px) {
+            .dashboard-main { flex-direction: column; }
+            .sidebar { width: 35%; }
+            .header-bar { flex-direction: column; align-items: stretch; text-align: center; }
+            #timer-display { font-size: 1.6rem; }
+            .btn { padding: 12px; font-size: 0.8rem; }
+            .analytics-grid { grid-template-columns: 1fr; }
+            .dev-panel { flex-direction: column; align-items: stretch; }
+            .goal-header { flex-direction: column; align-items: stretch; }
+            .research-row { flex-direction: column; }
+            .research-row button { width: 100%; white-space: normal; }
+        }
+        @media (max-width: 580px) {
+            .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #334155; height: auto; max-height: 40vh; }
+            body { flex-direction: column; }
+            .main-content { height: 60vh; }
+        }
+        #devToggleBtn {
+            background: none;
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            padding: 2px 8px;
+            font-size: 0.65rem;
+            cursor: pointer;
+            color: white;
+            transition: all 0.2s;
+        }
+        #devToggleBtn:hover {
+            background: var(--accent);
+            color: #0f172a !important;
+            transform: translateY(-1px);
+        }
+        .deep-purple {
+            background: var(--accent) !important;
+            color: white !important;
+            border: none !important;
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <span class="card-header-out">Guideline Cheat Sheet</span>
+    <div class="card-divider"></div>
+    <div class="card" style="padding:10px;">
+        <div class="def-box"><strong>E-E-A-T:</strong> Experience, Expertise, Authority, Trust.</div>
+        <div class="def-box"><strong>YMYL:</strong> High Stakes (Health, Finance, Safety). <strong style="color:#fbbf24;">★ MUCH STRICTER</strong></div>
+        <div class="def-box pq-rule-box">
+            <strong>📏 PQ RATING RULES (Telus Guidelines):</strong> Trust = gatekeeper.<br>
+            <strong>YMYL:</strong> Trust &lt; 2.0 → Lowest; Trust &lt; 3.0 caps at Low+; else (avg - 0.5) → Highest (≥4.5), High+ (≥4.0), High (≥3.5), Medium+ (≥3.0), Medium (≥2.5), Low+ (≥2.0), Low (≥1.5), Lowest+ (≥1.0), Lowest (&lt;1.0).<br>
+            <strong>Non‑YMYL:</strong> Trust &lt; 1.0 → Lowest; Trust &lt; 2.0 caps at Low; else avg → same tiers.<br>
+            <strong>Scale:</strong> Lowest • Lowest+ • Low • Low+ • Medium • Medium+ • High • High+ • Highest
+        </div>
+        <div class="def-box"><strong>MC Effort:</strong> Content labor and uniqueness.</div>
+        <div class="def-box"><strong>Needs Met:</strong> satisfaction of user intent. </div>
+        <div class="def-box"><strong>Exp vs Ext:</strong> <strong>Experience:</strong> Real-world use. | <strong>Expertise:</strong> Knowledge/Training.</div>
+    </div>
+
+    <span class="card-header-out">Research Hub</span>
+    <div class="card-divider"></div>
+    <div class="card" style="padding:10px;">
+        <input type="text" id="res-url" style="width:100%; padding:12px; background:#0f172a; border:1px solid #475569; color:white; border-radius:4px; margin-bottom:12px;" placeholder="Domain or Entity Name...">
+        <div style="display:flex; flex-direction: column; gap: 10px;">
+            <div class="research-row">
+                <button class="btn" style="background:#334155; color:white;" onclick="research('whois')">Whois</button>
+                <button class="btn" style="background:#334155; color:white;" onclick="research('reviews')">Reviews</button>
+                <button class="btn" style="background:#334155; color:white;" onclick="research('author')">Author</button>
+            </div>
+            <div class="research-row">
+                <button class="btn deep-purple" onclick="deepSearch()">🔍 Deep</button>
+                <button class="btn" style="background:#64748b; color:white;" onclick="viewArchive()">📦 Archive</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="mobile-block">📱 MOBILE LENS: Adjust for screen size/intent.</div>
+    <div class="timing-block">⚠️ TIMING: Finalize ~30s before AET expires.</div>
+    
+    <div class="hotkey-block">
+        <strong>⌨️ KEYBOARD SHORTCUTS</strong>
+        <div class="hotkey-item"><kbd>Space</kbd><span class="hotkey-desc">Start / Pause timer</span></div>
+        <div class="hotkey-item"><kbd>Enter</kbd><span class="hotkey-desc">Finish & Log task</span></div>
+    </div>
+</div>
+
+<div class="main-content">
+    <div class="header-bar">
+        <div class="timer-section">
+            <div><span style="font-size:0.65rem; font-weight:bold; display:block; opacity:0.8;">TASK TIME</span><span id="timer-display">00:00:00</span></div>
+            <div id="submitStatusBadge" class="submit-badge red">⚪ Not Ready</div>
+        </div>
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn" style="background:var(--success); color:white" onclick="startTimer()">Start</button>
+            <button class="btn" style="background:var(--warning)" onclick="pauseTimer()">Pause</button>
+            <button class="btn" id="finishLogBtn" style="background:var(--danger); color:white" onclick="finishAndLog()">Finish & Log</button>
+        </div>
+        <div style="text-align:right; font-size:0.75rem; font-weight:bold;">
+            TODAY: <span id="stat-today" style="color:var(--success)">0h 0m</span><br>
+            WEEKLY: <span id="stat-weekly" style="color:var(--warning)">0h 0m</span>
+            <div style="margin-top:5px;"><span style="font-size:0.7rem;">v1.9</span> <button id="devToggleBtn">🔧 Dev</button></div>
+        </div>
+    </div>
+
+    <div id="devPanel" class="dev-panel" style="display: none;">
+        <strong>DEV TOOLS</strong>
+        <button onclick="jumpTo159()">⏩ Jump 1:59:00</button>
+        <button onclick="warp30s()">⚡ Warp 30s left</button>
+        <button onclick="mockLoad()">🎭 Mock Load</button>
+    </div>
+
+    <div style="padding: 8px 20px 0 20px;">
+        <div class="goal-container">
+            <div class="goal-header">
+                <span>🎯 Daily Goal</span>
+                <div class="goal-setter">
+                    <span>Goal:</span>
+                    <input type="number" id="dailyGoalHours" step="0.5" min="0" max="12" value="6">
+                    <span>hours</span>
+                    <button onclick="setDailyGoal()">Set</button>
+                </div>
+            </div>
+            <div class="progress-bar-bg"><div class="progress-fill" id="goalFill"></div></div>
+            <div class="goal-stats">
+                <span>📊 <span id="todayProgressText">0h 0m</span> / <span id="goalTargetText">6h 0m</span></span>
+                <span id="goalEmoji" class="goal-achieved">⚡</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-scroll-area">
+        <div class="dashboard-main">
+            <div class="input-panel">
+                <span class="card-header-out">Task Configuration</span>
+                <div class="card-divider"></div>
+                <div class="card">
+                    <input type="text" id="q-name" placeholder="Query/Task Name" style="width:100%; padding:12px; background:#0f172a; border:1px solid #475569; color:white; border-radius:4px; margin-bottom:12px;">
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                        <select id="ymyl" onchange="updateYmylWarning(); calculate(); saveState();" style="flex:1; padding:12px; background:#0f172a; border:1px solid #475569; color:white; border-radius:4px;">
+                            <option value="no">Non-YMYL (Standard)</option>
+                            <option value="yes">YMYL (Stricter) ▲</option>
+                        </select>
+                        <div style="font-size:0.75rem; font-weight:bold;">AET: <input type="number" id="aet" value="5" step="1" min="1" max="20" style="width:65px; background:#0f172a; color:white; border:1px solid var(--accent); padding:8px; border-radius:4px;" onchange="updateSubmissionStatus(); saveState()"></div>
+                    </div>
+                    <div id="ymylWarningBadge" class="ymyl-warning" style="display: none;"><span>⚠️</span> YMYL ACTIVE — STRICT EVALUATION</div>
+                </div>
+
+                <span class="card-header-out">PQ Metrics (0-5)</span>
+                <div class="card-divider"></div>
+                <div class="card">
+                    <div class="slider-row"><div class="label-box">Experience <span id="v1">0.0</span></div><div class="description">First-hand use, personal photos.</div><input type="range" id="s1" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v1'); saveState();"></div>
+                    <div class="slider-row"><div class="label-box">Expertise <span id="v2">0.0</span></div><div class="description">Knowledge, skill, credentials.</div><input type="range" id="s2" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v2'); saveState();"></div>
+                    <div class="slider-row"><div class="label-box">Authority <span id="v3">0.0</span></div><div class="description">Reputation as go-to source.</div><input type="range" id="s3" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v3'); saveState();"></div>
+                    <div id="t-container" class="slider-row"><div class="label-box">Trustworthiness <span id="v4">0.0</span></div><div class="description">Honesty, accuracy, security.</div><input type="range" id="s4" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v4'); saveState();"></div>
+                    <div class="slider-row"><div class="label-box">MC Effort <span id="v5">0.0</span></div><div class="description">Effort and care put into page.</div><input type="range" id="s5" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v5'); saveState();"></div>
+                </div>
+
+                <span class="card-header-out" style="color:var(--nm)">Needs Met (0-5)</span>
+                <div class="card-divider" style="background:var(--nm)"></div>
+                <div class="card" style="border-left:4px solid var(--nm)">
+                    <div class="label-box" style="color:var(--nm)">Utility / NM <span id="v6">0.0</span></div>
+                    <input type="range" id="s6" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v6'); saveState();" style="accent-color: var(--nm);">
+                </div>
+            </div>
+
+            <div class="output-panel">
+                <span class="card-header-out">Summary</span>
+                <div class="card-divider"></div>
+                <div class="card">
+                    <div class="res-row">
+                        <div class="res-box"><span style="font-size:0.6rem; opacity:0.8;">PQ RATING</span><span id="out-pq" class="res-val">Lowest</span></div>
+                        <div class="res-box" style="border-color:var(--nm)"><span style="font-size:0.6rem; opacity:0.8; color:var(--nm);">NEEDS MET</span><span id="out-nm" class="res-val" style="color:var(--nm)">FailsM</span></div>
+                    </div>
+                    <textarea id="just-box" style="width:100%; background:#0b0f1a; border:1px solid var(--accent); color:white; padding:12px; border-radius:6px; font-size:0.82rem; min-height:140px;" readonly>Adjust sliders to begin...</textarea>
+                    <div class="last-just-card">
+                        <strong>📌 Last Task Justification (persistent)</strong>
+                        <textarea id="lastJustBox" readonly style="width:100%; background:#111827; border:1px solid #475569; color:#cbd5e1; font-size:0.7rem; margin-top:6px; padding:6px; border-radius:4px;" rows="2"></textarea>
+                    </div>
+                    <textarea id="internalNotes" class="internal-notes" rows="3" placeholder="📝 Internal Notes (saved in log, not justification)"></textarea>
+                    <div style="margin: 15px 0;"><button class="btn" style="background:var(--success); color:white; width:100%;" onclick="copyJustificationOnly()">📋 Save & Copy Justification</button></div>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn btn-io" onclick="exportCSV()">💾 Export Log</button>
+                        <button class="btn btn-io" onclick="document.getElementById('file-in').click()">📂 Import CSV</button>
+                        <input type="file" id="file-in" style="display:none" accept=".csv" onchange="importLog(event)">
+                    </div>
+                </div>
+
+                <span class="card-header-out">Analytics & Velocity</span>
+                <div class="card-divider"></div>
+                <div class="card">
+                    <div class="analytics-grid">
+                        <div class="analytics-card-item"><div class="analytics-label">Tasks Completed</div><div class="analytics-value" id="ana-count">0</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">Total Time</div><div class="analytics-value" id="ana-spent">0m 0s</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">Avg Task Time</div><div class="analytics-value" id="ana-avg">0m 0s</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">⚡ Velocity (tasks/h)</div><div class="analytics-value" id="velocityValue">0.0</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">📈 Efficiency % (actual vs AET)</div><div class="analytics-value" id="efficiencyValue">0.0%</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="history-section">
+            <div class="card-divider"></div>
+            <div class="history-header-row">
+                <span class="card-header-out">Session History</span>
+                <input type="text" id="historySearch" class="search-history" placeholder="🔍 Filter by Query / Notes...">
+                <button class="btn" style="background:var(--danger); color:white; font-size:0.65rem; padding:4px 10px;" onclick="wipe()">Wipe History</button>
+            </div>
+            <div class="history-table-card">
+                <table id="log-table"><thead><tr><th>Date</th><th>Time</th><th>Duration</th><th>Query</th><th>PQ</th><th>NM</th></tr></thead><tbody></tbody></table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="breakModal" class="break-modal">
+    <div class="modal-card">
+        <h2>🧘 Time to Stretch!</h2>
+        <p>You've reached 2 hours of rating. Stand up, walk around, rest your eyes.<br>This break reminder will reappear every 2 hours.</p>
+        <button class="btn" style="background: var(--success);" onclick="resumeBreak()">Resume Session</button>
+    </div>
+</div>
+
+<script>
+    // ---------- GLOBALS ----------
+    let seconds = 0, timerInterval, isRunning = false;
+    let alertPlayed = false;
+    let audioCtx = null;
+    let lastBreakTrigger = 0;
+    let currentFilter = "";
+
+    // Helper functions (timer, audio, format)
+    function initAudio() { if (!audioCtx || audioCtx.state === 'closed') audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
+    function playAlert() { try { const ctx = initAudio(); if (!ctx || ctx.state !== 'running') return; const osc = ctx.createOscillator(); const gain = ctx.createGain(); osc.connect(gain); gain.connect(ctx.destination); osc.type = 'sine'; osc.frequency.setValueAtTime(880, ctx.currentTime); gain.gain.setValueAtTime(0.25, ctx.currentTime); osc.start(); osc.stop(ctx.currentTime + 0.5); } catch(e) { console.warn(e); } }
+    function formatHMS(sec) { let h = Math.floor(sec / 3600); let m = Math.floor((sec % 3600) / 60); let s = sec % 60; return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`; }
+    function formatTimeHM(s) { let h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60; return h > 0 ? `${h}h ${m}m ${sc}s` : `${m}m ${sc}s`; }
+    function formatHMshort(sec) { let h = Math.floor(sec/3600); let m = Math.floor((sec%3600)/60); return h>0?`${h}h ${m}m`:`${m}m`; }
+    
+    // ----- Strict YMYL Validation (updated) -----
+    function getRatingFromScore(score, isYMYL, trust) {
+        // YMYL strict caps
+        if (isYMYL) {
+            if (trust < 2.0) return "Lowest";
+            if (trust < 3.0) {
+                // Hard cap at Low+ (max Low+)
+                if (score < 1.0) return "Lowest";
+                if (score < 1.5) return "Lowest+";
+                if (score < 2.0) return "Low";
+                return "Low+";
+            }
+            let effective = Math.max(0, score - 0.5);
+            if (effective >= 4.5) return "Highest";
+            if (effective >= 4.0) return "High+";
+            if (effective >= 3.5) return "High";
+            if (effective >= 3.0) return "Medium+";
+            if (effective >= 2.5) return "Medium";
+            if (effective >= 2.0) return "Low+";
+            if (effective >= 1.5) return "Low";
+            if (effective >= 1.0) return "Lowest+";
+            return "Lowest";
+        } else {
+            // Non-YMYL: trust < 1.0 → Lowest, trust < 2.0 → cap at Low
+            if (trust < 1.0) return "Lowest";
+            if (trust < 2.0) {
+                if (score >= 3.0) return "Low";
+                if (score >= 2.0) return "Low";
+                if (score >= 1.5) return "Lowest+";
+                if (score >= 1.0) return "Lowest+";
+                return "Lowest";
+            }
+            if (score >= 4.5) return "Highest";
+            if (score >= 4.0) return "High+";
+            if (score >= 3.5) return "High";
+            if (score >= 3.0) return "Medium+";
+            if (score >= 2.5) return "Medium";
+            if (score >= 2.0) return "Low+";
+            if (score >= 1.5) return "Low";
+            if (score >= 1.0) return "Lowest+";
+            return "Lowest";
+        }
+    }
+
+    function upd(el, id) { document.getElementById(id).innerText = parseFloat(el.value).toFixed(1); calculate(); }
+    function research(type) { let url = document.getElementById('res-url').value.trim(); if(!url) return alert("Enter URL."); if(type === 'whois') window.open(`https://whois.domaintools.com/${url}`); if(type === 'reviews') window.open(`https://www.google.com/search?q=reviews+of+${url}`); if(type === 'author') window.open(`https://www.google.com/search?q=${url}+biography+OR+LinkedIn`); }
+    function deepSearch() { let url = document.getElementById('res-url').value.trim(); if(!url) return; let queries = [`${url} scam OR complaint`, `site:reddit.com "${url}"`, `${url} LinkedIn`]; queries.forEach(q => window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`)); }
+    function viewArchive() { let url = document.getElementById('res-url').value.trim(); if(url) window.open(`https://web.archive.org/web/*/${encodeURI(url)}`); }
+    function updateYmylWarning() { const isYMYL = document.getElementById('ymyl').value === 'yes'; document.getElementById('ymylWarningBadge').style.display = isYMYL ? 'flex' : 'none'; saveState(); }
+    
+    function updateSubmissionStatus() {
+        let aetSec = parseFloat(document.getElementById('aet').value) * 60;
+        let percent = (seconds / aetSec) * 100;
+        let badge = document.getElementById('submitStatusBadge');
+        if (seconds >= aetSec * 0.9) {
+            badge.className = "submit-badge green";
+            badge.innerText = "✅ Safe to Submit (≥90%)";
+        } else if (seconds >= aetSec * 0.75) {
+            badge.className = "submit-badge yellow";
+            badge.innerText = "⚠️ Caution (75-85%)";
+        } else {
+            badge.className = "submit-badge red";
+            badge.innerText = "🔴 Not Ready (<75% AET)";
+        }
+    }
+    
+    function calculate() {
+        const isYMYL = document.getElementById('ymyl').value === 'yes';
+        let v = [1,2,3,4,5].map(i => parseFloat(document.getElementById('s'+i).value));
+        let nmVal = parseFloat(document.getElementById('s6').value);
+        let avg = v.reduce((a,b)=>a+b,0)/5;
+        let trust = v[3];
+        document.getElementById('t-container').className = isYMYL ? 'slider-row trust-glow' : 'slider-row';
+        let pq = getRatingFromScore(avg, isYMYL, trust);
+        document.getElementById('out-pq').innerText = pq;
+        let nm = "FailsM";
+        if (nmVal >= 4.8) nm = "Fully Meets";
+        else if (nmVal >= 4.2) nm = "Highly Meets+";
+        else if (nmVal >= 3.6) nm = "Highly Meets";
+        else if (nmVal >= 3.0) nm = "Moderately Meets+";
+        else if (nmVal >= 2.3) nm = "Moderately Meets";
+        else if (nmVal >= 1.5) nm = "Slightly Meets+";
+        else if (nmVal >= 0.8) nm = "Slightly Meets";
+        document.getElementById('out-nm').innerText = nm;
+        let justification = `PQ RATING: ${pq} | NEEDS MET: ${nm}\nYMYL MODE: ${isYMYL ? 'ACTIVE (strict)' : 'Standard'}\n\nE-E-A-T + Effort → Exp:${v[0].toFixed(1)} Exp:${v[1].toFixed(1)} Auth:${v[2].toFixed(1)} Trust:${trust.toFixed(1)} Effort:${v[4].toFixed(1)}\nAvg:${avg.toFixed(2)} NM:${nmVal.toFixed(1)}\nWhy "${pq}": ${isYMYL? (trust<2? 'Trust too low' : trust<3? 'Trust caps at Low+' : 'YMYL penalty') : (trust<1?'Trust<1 => Lowest': trust<2?'Trust<2 capped at Low':'Standard rules')}`;
+        document.getElementById('just-box').value = justification;
+    }
+    
+    // Filter history
+    function renderFilteredHistory() {
+        let logs = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
+        let searchTerm = document.getElementById('historySearch')?.value.toLowerCase() || "";
+        let filtered = logs.filter(l => !l._temp && (searchTerm === "" || l.query?.toLowerCase().includes(searchTerm) || (l.notes || "").toLowerCase().includes(searchTerm)));
+        let tbody = document.querySelector('#log-table tbody');
+        tbody.innerHTML = filtered.map(l=>`<tr><td style="padding:10px;">${escapeHtml(l.date)}</td><td style="padding:10px;">${escapeHtml(l.time||'--')}</td><td style="padding:10px;">${escapeHtml(l.duration)}</td><td style="padding:10px;">${escapeHtml(l.query)}</td><td style="padding:10px;">${escapeHtml(l.pq)}</td><td style="padding:10px;">${escapeHtml(l.nm)}</td></tr>`).join('');
+    }
+    
+    function saveState() {
+        let state={ s1:document.getElementById('s1').value,s2:document.getElementById('s2').value,s3:document.getElementById('s3').value,s4:document.getElementById('s4').value,s5:document.getElementById('s5').value,s6:document.getElementById('s6').value, query:document.getElementById('q-name').value, ymyl:document.getElementById('ymyl').value, aet:document.getElementById('aet').value, notes:document.getElementById('internalNotes').value, seconds:seconds, isRunning:isRunning };
+        localStorage.setItem('raterDashboardState',JSON.stringify(state));
+    }
+    
+    function restoreState() {
+        let saved=localStorage.getItem('raterDashboardState');
+        if(saved){ try{ let s=JSON.parse(saved); ['s1','s2','s3','s4','s5','s6'].forEach(id=>{ if(s[id]) document.getElementById(id).value=s[id]; upd(document.getElementById(id),id.replace('s','v')); }); if(s.query) document.getElementById('q-name').value=s.query; if(s.ymyl) document.getElementById('ymyl').value=s.ymyl; if(s.aet) document.getElementById('aet').value=s.aet; if(s.notes) document.getElementById('internalNotes').value=s.notes; seconds=s.seconds||0; document.getElementById('timer-display').innerText=formatHMS(seconds); if(s.isRunning) startTimer(); else { isRunning=false; if(timerInterval) clearInterval(timerInterval); } updateYmylWarning(); calculate(); updateSubmissionStatus(); }catch(e){} }
+        let lastJust = localStorage.getItem('lastJustificationText');
+        if(lastJust) document.getElementById('lastJustBox').value = lastJust;
+    }
+    
+    function startTimer() { if(!isRunning){ initAudio(); isRunning=true; if(timerInterval) clearInterval(timerInterval); timerInterval=setInterval(()=>{ seconds++; document.getElementById('timer-display').innerText=formatHMS(seconds); let aetVal=parseFloat(document.getElementById('aet').value)*60; if(aetVal-seconds<=30 && aetVal-seconds>0){ document.getElementById('timer-display').style.color='var(--danger)'; if(!alertPlayed){ playAlert(); alertPlayed=true; } } else if(seconds>=aetVal) document.getElementById('timer-display').style.color='var(--danger)'; else document.getElementById('timer-display').style.color='var(--success)'; updateSubmissionStatus(); saveState(); checkBreakThreshold(getTotalTodaySecIncludingCurrent()); },1000); } }
+    function pauseTimer() { clearInterval(timerInterval); isRunning=false; saveState(); updateSubmissionStatus(); }
+    
+    function finishAndLog() {
+        if(seconds<=0){ alert("Start timer first."); return; }
+        let statusElem = document.getElementById('submitStatusBadge');
+        let isGreen = statusElem.classList.contains('green');
+        if(!isGreen && !confirm("⚠️ Submission not 'Safe to Submit'. Are you sure you want to log this task?")) return;
+        let logs = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
+        let aetSec = parseFloat(document.getElementById('aet').value) * 60;
+        let now = new Date();
+        let dateISO = now.toISOString().slice(0,10);
+        let dateLocal = now.toLocaleDateString();
+        let justificationText = document.getElementById('just-box').value;
+        let logEntry = {
+            date: dateLocal, dateISO: dateISO, time: now.toLocaleTimeString(), duration: formatHMS(seconds),
+            query: document.getElementById('q-name').value.trim()||"Unnamed",
+            pq: document.getElementById('out-pq').innerText,
+            nm: document.getElementById('out-nm').innerText,
+            sec: seconds, notes: document.getElementById('internalNotes').value,
+            justification: justificationText, aetSec: aetSec
+        };
+        logs.unshift(logEntry);
+        localStorage.setItem('raterLog_v9', JSON.stringify(logs));
+        localStorage.setItem('lastJustificationText', justificationText);
+        document.getElementById('lastJustBox').value = justificationText;
+        navigator.clipboard.writeText(justificationText);
+        pauseTimer(); seconds=0; alertPlayed=false;
+        document.getElementById('timer-display').innerText=formatHMS(0);
+        document.getElementById('timer-display').style.color='var(--success)';
+        document.getElementById('q-name').value="";
+        ['s1','s2','s3','s4','s5','s6'].forEach(id=>{ document.getElementById(id).value=0; upd(document.getElementById(id),id.replace('s','v')); });
+        document.getElementById('internalNotes').value="";
+        calculate(); saveState(); renderTableAndStats(); updateSubmissionStatus();
+        alert("✅ Task logged, justification copied.");
+    }
+    function copyJustificationOnly() { navigator.clipboard.writeText(document.getElementById('just-box').value); alert("📋 Copied."); }
+    
+    function renderTableAndStats() {
+        renderFilteredHistory();
+        let logs = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
+        let todayISO = new Date().toISOString().slice(0,10);
+        let todaySec = 0, weeklySec = 0, totalSec = 0, totalExpectedSec = 0, taskCount = 0;
+        let now = new Date(); let oneWeekAgo = new Date(); oneWeekAgo.setDate(now.getDate() - 7); let oneWeekAgoISO = oneWeekAgo.toISOString().slice(0,10);
+        logs.forEach(l => { if(l._temp) return; let secs = l.sec || 0; let expected = l.aetSec || 300; totalSec += secs; totalExpectedSec += expected; taskCount++; let entryDateISO = l.dateISO || (()=>{ let d=new Date(l.date); return isNaN(d)?todayISO:d.toISOString().slice(0,10); })(); if(entryDateISO === todayISO) todaySec += secs; if(entryDateISO >= oneWeekAgoISO) weeklySec += secs; });
+        document.getElementById('stat-today').innerText = formatTimeHM(todaySec);
+        document.getElementById('stat-weekly').innerText = formatTimeHM(weeklySec);
+        document.getElementById('ana-count').innerText = taskCount;
+        document.getElementById('ana-spent').innerText = formatTimeHM(totalSec);
+        let avgSec = taskCount ? Math.floor(totalSec/taskCount) : 0;
+        document.getElementById('ana-avg').innerText = formatTimeHM(avgSec);
+        let velocity = totalSec>0 ? (taskCount / (totalSec/3600)).toFixed(1) : "0.0";
+        document.getElementById('velocityValue').innerText = velocity;
+        let efficiency = totalExpectedSec>0 ? ((totalSec / totalExpectedSec)*100).toFixed(1) : "0.0";
+        document.getElementById('efficiencyValue').innerText = efficiency+"%";
+        let targetSec = (parseFloat(localStorage.getItem('dailyGoalHours')||'6')*3600);
+        let percent = Math.min(100, (todaySec/targetSec)*100);
+        document.getElementById('goalFill').style.width = `${percent}%`;
+        document.getElementById('todayProgressText').innerText = formatHMshort(todaySec);
+        updateGoalDisplay();
+        if(todaySec >= targetSec && targetSec>0) document.getElementById('goalEmoji').innerHTML = "✅ Goal met! 🎉";
+        else document.getElementById('goalEmoji').innerHTML = "⚡";
+        checkBreakThreshold(getTotalTodaySecIncludingCurrent());
+    }
+    function wipe() { if(confirm("Wipe all history?")){ localStorage.removeItem('raterLog_v9'); renderTableAndStats(); } }
+    async function exportCSV() { let logs = JSON.parse(localStorage.getItem('raterLog_v9'))||[]; if(!logs.length) return alert("No data"); let rows=[["Date","Time","Duration","Query","PQ","NM","Notes","Justification","AET_sec"]]; logs.forEach(l=>{ rows.push([`"${l.date}"`,`"${l.time||''}"`,`"${l.duration}"`,`"${l.query.replace(/"/g,'""')}"`,`"${l.pq}"`,`"${l.nm}"`,`"${(l.notes||'').replace(/"/g,'""')}"`,`"${(l.justification||'').replace(/"/g,'""')}"`,l.aetSec||300]); }); let csv=rows.map(r=>r.join(",")).join("\n"); let defaultName=`rater_log_${new Date().toISOString().slice(0,10)}.csv`; if('showSaveFilePicker' in window){ try{ let handle=await window.showSaveFilePicker({suggestedName:defaultName,types:[{description:'CSV',accept:{'text/csv':['.csv']}}]}); let writable=await handle.createWritable(); await writable.write(csv); await writable.close(); alert("✅ Exported"); }catch(e){} } else{ let a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=defaultName; a.click(); URL.revokeObjectURL(a.href); alert("✅ Exported"); } }
+    function parseCSV(txt){ let rows=[]; let inQuote=false, cur=[], field=""; for(let i=0;i<txt.length;i++){ let ch=txt[i]; if(ch==='"'){ if(inQuote && txt[i+1]==='"'){ i++; field+='"'; } else inQuote=!inQuote; } else if(ch===',' && !inQuote){ cur.push(field); field=""; } else if(ch==='\n' && !inQuote){ cur.push(field); if(cur.length>1 || cur[0]!=="") rows.push(cur); cur=[]; field=""; } else field+=ch; } if(field||cur.length){ cur.push(field); if(cur.length) rows.push(cur); } return rows.map(r=>r.map(f=>f.trim().replace(/^"|"$/g,''))); }
+    function importLog(e){ let file=e.target.files[0]; if(!file) return; let reader=new FileReader(); reader.onload=function(ev){ let rows=parseCSV(ev.target.result); if(rows.length<2) return alert("Invalid CSV"); let headers=rows[0].map(h=>h.toLowerCase()); let dateIdx=headers.indexOf('date'), durIdx=headers.indexOf('duration'), aetIdx=headers.indexOf('aet_sec'); if(dateIdx===-1||durIdx===-1) return alert("Need Date & Duration columns"); let imported=[]; for(let i=1;i<rows.length;i++){ let r=rows[i]; if(r.length<=Math.max(dateIdx,durIdx)) continue; let durRaw=r[durIdx]||"", secs=0, parts=durRaw.split(':'); if(parts.length===3) secs=parseInt(parts[0])*3600+parseInt(parts[1])*60+parseInt(parts[2]); else if(parts.length===2) secs=parseInt(parts[0])*60+parseInt(parts[1]); let aetVal=aetIdx!==-1&&r[aetIdx]?parseInt(r[aetIdx]):300; let rawDate = r[dateIdx]; let parsedISO = (()=>{ try{ let d=new Date(rawDate); return isNaN(d)?null:d.toISOString().slice(0,10); }catch(e){ return null; } })(); imported.push({ date:rawDate, dateISO:parsedISO, time:"", duration:durRaw, query:r[headers.indexOf('query')]||"Imported", pq:r[headers.indexOf('pq')]||"N/A", nm:r[headers.indexOf('nm')]||"N/A", sec:secs||0, notes:r[headers.indexOf('notes')]||"", justification:r[headers.indexOf('justification')]||"", aetSec:aetVal }); } if(imported.length){ localStorage.setItem('raterLog_v9',JSON.stringify(imported)); renderTableAndStats(); alert(`Imported ${imported.length} entries`); } else alert("No valid rows"); }; reader.readAsText(file,"UTF-8"); }
+    function escapeHtml(s){ return String(s).replace(/[&<>]/g,function(m){ return m==='&'?'&amp;':m==='<'?'&lt;':'&gt;';}); }
+    function setDailyGoal(){ let g=parseFloat(document.getElementById('dailyGoalHours').value); if(isNaN(g)||g<0)g=6; if(g>16)g=16; localStorage.setItem('dailyGoalHours',g); updateGoalDisplay(); renderTableAndStats(); }
+    function updateGoalDisplay(){ let goal=parseFloat(localStorage.getItem('dailyGoalHours')||'6'); document.getElementById('goalTargetText').innerText=`${goal.toFixed(1)}h`; document.getElementById('dailyGoalHours').value=goal; }
+    function jumpTo159(){ seconds=7140; document.getElementById('timer-display').innerText=formatHMS(seconds); alertPlayed=false; saveState(); updateSubmissionStatus(); alert("⏩ 1:59:00"); }
+    function warp30s(){ let aetSec=parseFloat(document.getElementById('aet').value)*60; seconds=Math.max(0,aetSec-30); document.getElementById('timer-display').innerText=formatHMS(seconds); alertPlayed=false; saveState(); updateSubmissionStatus(); }
+    function mockLoad(){ document.getElementById('s1').value=4.0; upd(document.getElementById('s1'),'v1'); document.getElementById('s2').value=3.5; upd(document.getElementById('s2'),'v2'); document.getElementById('s3').value=4.2; upd(document.getElementById('s3'),'v3'); document.getElementById('s4').value=4.5; upd(document.getElementById('s4'),'v4'); document.getElementById('s5').value=4.0; upd(document.getElementById('s5'),'v5'); document.getElementById('s6').value=4.2; upd(document.getElementById('s6'),'v6'); document.getElementById('q-name').value="Mock: Organic Skincare"; document.getElementById('ymyl').value="yes"; document.getElementById('aet').value="5"; updateYmylWarning(); calculate(); saveState(); updateSubmissionStatus(); }
+    function getTotalTodaySecIncludingCurrent() { let logs = JSON.parse(localStorage.getItem('raterLog_v9')) || []; let todayISO = new Date().toISOString().slice(0,10); let total = logs.filter(l => !l._temp && (l.dateISO === todayISO || (l.date && new Date(l.date).toISOString().slice(0,10)===todayISO))).reduce((sum,l)=>sum+(l.sec||0),0); if (isRunning || seconds>0) total += seconds; return total; }
+    function checkBreakThreshold(cumulativeSec) { let breakInt=7200; let block=Math.floor(cumulativeSec/breakInt); if(cumulativeSec>=breakInt && block>lastBreakTrigger) { lastBreakTrigger=block; showBreakModal(); } }
+    function showBreakModal() { playAlert(); document.getElementById('breakModal').style.visibility='visible'; }
+    function resumeBreak() { document.getElementById('breakModal').style.visibility='hidden'; renderTableAndStats(); }
+
+    document.addEventListener('keydown',(e)=>{ if(e.code==='Space'){ e.preventDefault(); isRunning?pauseTimer():startTimer(); } else if(e.code==='Enter'){ let tag=document.activeElement?.tagName; if(tag==='TEXTAREA'||(tag==='INPUT'&&document.activeElement?.type!=='text')) return; e.preventDefault(); finishAndLog(); } });
+    document.getElementById('devToggleBtn').addEventListener('click',()=>{ let p=document.getElementById('devPanel'); p.style.display=p.style.display==='none'?'block':'none'; });
+    document.getElementById('historySearch').addEventListener('input', () => renderFilteredHistory());
+    window.onload=()=>{ restoreState(); loadGoal(); renderTableAndStats(); calculate(); updateYmylWarning(); updateSubmissionStatus(); };
+    window.addEventListener('beforeunload', (e) => { saveState(); });
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveState(); });
+    document.body.addEventListener('click',()=>{ if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume(); },{once:true});
+    if('serviceWorker' in navigator){ navigator.serviceWorker.register('/sw.js').catch(()=>console.log("SW not active, standalone mode works")); }
+    function loadGoal() { let g=localStorage.getItem('dailyGoalHours'); if(g&&!isNaN(parseFloat(g))) document.getElementById('dailyGoalHours').value=parseFloat(g); updateGoalDisplay(); renderTableAndStats(); }
+</script>
+</body>
+</html>
