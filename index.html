@@ -638,6 +638,7 @@
             </div>
             <div class="research-row">
                 <button class="btn deep-purple" onclick="deepSearch()">🔍 Deep</button>
+                <button class="btn" style="background:#1d4ed8; color:white;" onclick="viewBBB()">🏢 BBB</button>
                 <button class="btn" style="background:#64748b; color:white;" onclick="viewArchive()">📦 Archive</button>
             </div>
         </div>
@@ -850,9 +851,10 @@
     }
 
     function upd(el, id) { document.getElementById(id).innerText = parseFloat(el.value).toFixed(1); calculate(); }
-    function research(type) { let url = document.getElementById('res-url').value.trim(); if(!url) return alert("Enter URL."); if(type === 'whois') window.open(`https://whois.domaintools.com/${url}`); if(type === 'reviews') window.open(`https://www.google.com/search?q=reviews+of+${url}`); if(type === 'author') window.open(`https://www.google.com/search?q=${url}+biography+OR+LinkedIn`); }
-    function deepSearch() { let url = document.getElementById('res-url').value.trim(); if(!url) return; let queries = [`${url} scam OR complaint`, `site:reddit.com "${url}"`, `${url} LinkedIn`]; queries.forEach(q => window.open(`https://www.google.com/search?q=${encodeURIComponent(q)}`)); }
-    function viewArchive() { let url = document.getElementById('res-url').value.trim(); if(url) window.open(`https://web.archive.org/web/*/${encodeURI(url)}`); }
+    function research(t){ let v=document.getElementById('res-url').value.trim(); if(!v) return alert("Enter URL/Entity."); if(t==='whois') window.open(`https://whois.domaintools.com/${v}`); if(t==='reviews') window.open(`https://www.google.com/search?q=reviews+of+${encodeURIComponent(v)}`); if(t==='author') window.open(`https://www.google.com/search?q=${encodeURIComponent(v)}+biography+OR+LinkedIn`); }
+    function deepSearch(){ let v=document.getElementById('res-url').value.trim(); if(!v) return alert("Enter URL/Entity."); let d=v.replace(/^(?:https?:\/\/)?(?:www\.)?/i,'').split('/')[0]; window.open('https://www.google.com/search?q='+encodeURIComponent(`(site:glassdoor.com OR site:wikipedia.org OR site:reddit.com OR "lawsuit") "${d}" -site:${d}`)); }
+    function viewBBB(){ let v=document.getElementById('res-url').value.trim(); if(!v) return alert("Enter URL/Entity."); let d=v.replace(/^(?:https?:\/\/)?(?:www\.)?/i,'').split('/')[0]; window.open('https://www.google.com/search?q=site:bbb.org+'+encodeURIComponent(`"${d}"`)); }
+    function viewArchive(){ let v=document.getElementById('res-url').value.trim(); if(!v) return alert("Enter URL/Entity."); window.open(`https://web.archive.org/web/*/${encodeURI(v)}`); }
     function updateYmylWarning() { const isYMYL = document.getElementById('ymyl').value === 'yes'; document.getElementById('ymylWarningBadge').style.display = isYMYL ? 'flex' : 'none'; saveState(); }
     
     function updateSubmissionStatus() {
