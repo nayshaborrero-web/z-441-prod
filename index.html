@@ -28,6 +28,47 @@
             --goal-bg: #334155;
             --goal-fill: #10b981;
         }
+
+        /* ========== CUSTOM SCROLLBARS - THEME MATCHING ========== */
+        /* For WebKit browsers (Chrome, Safari, Edge) */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;        /* matches your --bg */
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;        /* matches your --scrollbar-thumb */
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #8b5cf6;        /* matches your --accent (purple) */
+        }
+        ::-webkit-scrollbar-corner {
+            background: #0f172a;
+        }
+
+        /* For Firefox */
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #0f172a;  /* thumb then track */
+        }
+
+        /* Optional: ensure specific scrollable containers inherit the style */
+        .sidebar,
+        .dashboard-scroll-area,
+        .history-table-card,
+        textarea,
+        .card,
+        .goal-container,
+        .dev-panel {
+            scrollbar-width: thin;
+            scrollbar-color: #475569 #0f172a;
+        }
+
         body {
             font-family: 'Segoe UI', 'Inter', system-ui, -apple-system, sans-serif;
             background: var(--bg);
