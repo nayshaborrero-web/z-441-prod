@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes, viewport-fit=cover">
-    <title>Rater Dashboard v2.0 | Fixed Date Handling + Persistence</title>
+    <title>Rater Dashboard v2.1 | Goal Mode Selector + Working Break Alerts</title>
     <!-- PWA Meta Tags & Icons -->
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -29,37 +29,20 @@
             --goal-fill: #10b981;
         }
 
+        body.mode-training {
+            --accent: #f59e0b !important;
+            --nm: #f59e0b !important;
+            --success: #f59e0b !important;
+        }
+
         /* ========== CUSTOM SCROLLBARS - THEME MATCHING ========== */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #0f172a;
-            border-radius: 10px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 10px;
-            transition: background 0.2s ease;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #8b5cf6;
-        }
-        ::-webkit-scrollbar-corner {
-            background: #0f172a;
-        }
-        * {
-            scrollbar-width: thin;
-            scrollbar-color: #475569 #0f172a;
-        }
-        .sidebar,
-        .dashboard-scroll-area,
-        .history-table-card,
-        textarea,
-        .card,
-        .goal-container,
-        .dev-panel {
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 10px; transition: background 0.2s ease; }
+        ::-webkit-scrollbar-thumb:hover { background: #8b5cf6; }
+        ::-webkit-scrollbar-corner { background: #0f172a; }
+        * { scrollbar-width: thin; scrollbar-color: #475569 #0f172a; }
+        .sidebar, .dashboard-scroll-area, .history-table-card, textarea, .card, .goal-container, .dev-panel {
             scrollbar-width: thin;
             scrollbar-color: #475569 #0f172a;
         }
@@ -233,9 +216,33 @@
             max-height: 250px;
             overflow-y: auto;
         }
-        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
-        th { background: #1e293b; color: var(--accent); text-align: left; padding: 12px; position: sticky; top: 0; }
-        td { padding: 10px; border-bottom: 1px solid #1e293b; }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.8rem;
+            table-layout: fixed;
+        }
+        th, td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #1e293b;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        th {
+            background: #1e293b;
+            color: var(--accent);
+            position: sticky;
+            top: 0;
+        }
+        th:nth-child(1), td:nth-child(1) { width: 12%; }
+        th:nth-child(2), td:nth-child(2) { width: 10%; }
+        th:nth-child(3), td:nth-child(3) { width: 12%; }
+        th:nth-child(4), td:nth-child(4) { width: 28%; }
+        th:nth-child(5), td:nth-child(5) { width: 10%; }
+        th:nth-child(6), td:nth-child(6) { width: 10%; }
+        th:nth-child(7), td:nth-child(7) { width: 18%; }
         .def-box {
             margin-bottom: 10px;
             line-height: 1.4;
@@ -496,6 +503,112 @@
             border-radius: 8px;
             font-size: 0.7rem;
         }
+        .flag-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 10px 0;
+        }
+        .flag-btn {
+            background: #334155;
+            border: 1px solid #475569;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 40px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .flag-btn.active {
+            background: var(--danger);
+            border-color: var(--danger);
+            color: white;
+        }
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 10px 0;
+        }
+        .check-row label {
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        .warning-badge {
+            background: rgba(239, 68, 68, 0.2);
+            border-left: 3px solid var(--danger);
+            padding: 6px 10px;
+            font-size: 0.7rem;
+            margin-top: 8px;
+            border-radius: 4px;
+        }
+        .mode-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #111827;
+            padding: 6px 16px;
+            border-radius: 40px;
+            border: 1px solid var(--accent);
+        }
+        .mode-toggle span {
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: var(--text);
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .mode-toggle span.active {
+            color: var(--accent);
+            text-shadow: 0 0 4px var(--accent);
+        }
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider-round {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #334155;
+            transition: 0.3s;
+            border-radius: 34px;
+        }
+        .slider-round:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider-round {
+            background-color: var(--accent);
+        }
+        input:checked + .slider-round:before {
+            transform: translateX(26px);
+        }
+        .interp-info {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
         @media (max-width: 768px) {
             body { flex-direction: column; height: auto; overflow: auto; }
             .sidebar { width: 100%; border-right: none; border-bottom: 1px solid #334155; max-height: none; overflow-y: auto; }
@@ -523,6 +636,10 @@
             .dev-panel { flex-direction: column; align-items: stretch; margin: 8px 12px 0 12px; }
             .dashboard-scroll-area { padding: 16px; }
             .hotkey-block { margin-bottom: 16px; }
+            .mode-toggle { justify-content: center; }
+            .flag-group { justify-content: center; }
+            .header-stats { flex-direction: column; align-items: center; gap: 8px; }
+            th, td { white-space: normal; word-break: break-word; }
         }
         @media (max-width: 480px) {
             .header-bar .btn { font-size: 0.75rem; padding: 10px; }
@@ -549,6 +666,36 @@
             color: white !important;
             border: none !important;
         }
+        .header-stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            text-align: right;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .header-stats > div {
+            line-height: 1.4;
+        }
+        .training-today { color: #38bdf8; }
+        .training-weekly { color: #c084fc; }
+        .goal-mode-selector {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 6px;
+            font-size: 0.7rem;
+        }
+        .goal-mode-selector select {
+            background: #0f172a;
+            border: 1px solid var(--accent);
+            color: white;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 0.7rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -570,20 +717,23 @@
         <div class="def-box"><strong>Exp vs Ext:</strong> <strong>Experience:</strong> Real-world use. | <strong>Expertise:</strong> Knowledge/Training.</div>
     </div>
 
-    <span class="card-header-out">Research Hub</span>
-    <div class="card-divider"></div>
-    <div class="card" style="padding:10px;">
-        <input type="text" id="res-url" style="width:100%; padding:12px; background:#0f172a; border:1px solid #475569; color:white; border-radius:4px; margin-bottom:12px;" placeholder="Domain or Entity Name...">
-        <div style="display:flex; flex-direction: column; gap: 10px;">
-            <div class="research-row">
-                <button class="btn" style="background:#334155; color:white;" onclick="research('whois')">Whois</button>
-                <button class="btn" style="background:#334155; color:white;" onclick="research('reviews')">Reviews</button>
-                <button class="btn" style="background:#334155; color:white;" onclick="research('author')">Author</button>
-            </div>
-            <div class="research-row">
-                <button class="btn deep-purple" onclick="deepSearch()">🔍 Deep</button>
-                <button class="btn" style="background:#1d4ed8; color:white;" onclick="viewBBB()">🏢 BBB</button>
-                <button class="btn" style="background:#64748b; color:white;" onclick="viewArchive()">📦 Archive</button>
+    <!-- Research Hub card - always visible -->
+    <div class="research-hub-card">
+        <span class="card-header-out">Research Hub</span>
+        <div class="card-divider"></div>
+        <div class="card" style="padding:10px;">
+            <input type="text" id="res-url" style="width:100%; padding:12px; background:#0f172a; border:1px solid #475569; color:white; border-radius:4px; margin-bottom:12px;" placeholder="Domain or Entity Name...">
+            <div style="display:flex; flex-direction: column; gap: 10px;">
+                <div class="research-row">
+                    <button class="btn" style="background:#334155; color:white;" onclick="research('whois')">Whois</button>
+                    <button class="btn" style="background:#334155; color:white;" onclick="research('reviews')">Reviews</button>
+                    <button class="btn" style="background:#334155; color:white;" onclick="research('author')">Author</button>
+                </div>
+                <div class="research-row">
+                    <button class="btn deep-purple" onclick="deepSearch()">🔍 Deep</button>
+                    <button class="btn" style="background:#1d4ed8; color:white;" onclick="viewBBB()">🏢 BBB</button>
+                    <button class="btn" style="background:#64748b; color:white;" onclick="viewArchive()">📦 Archive</button>
+                </div>
             </div>
         </div>
     </div>
@@ -604,15 +754,29 @@
             <div><span style="font-size:0.65rem; font-weight:bold; display:block; opacity:0.8;">TASK TIME</span><span id="timer-display">00:00:00</span></div>
             <div id="submitStatusBadge" class="submit-badge red">⚪ Not Ready</div>
         </div>
-        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
             <button class="btn" style="background:var(--success); color:white" onclick="startTimer()">Start</button>
             <button class="btn" style="background:var(--warning)" onclick="pauseTimer()">Pause</button>
             <button class="btn" id="finishLogBtn" style="background:var(--danger); color:white" onclick="finishAndLog()">Finish & Log</button>
+            <div class="mode-toggle">
+                <span id="ratingLabel" class="active">Rating</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="modeToggleCheckbox">
+                    <span class="slider-round"></span>
+                </label>
+                <span id="trainingLabel">Training</span>
+            </div>
         </div>
-        <div style="text-align:right; font-size:0.75rem; font-weight:bold;">
-            TODAY: <span id="stat-today" style="color:var(--success)">0h 0m</span><br>
-            WEEKLY: <span id="stat-weekly" style="color:var(--warning)">0h 0m</span>
-            <div style="margin-top:5px;"><span style="font-size:0.7rem;">v2.0</span> <button id="devToggleBtn">🔧 Dev</button></div>
+        <div class="header-stats">
+            <div>
+                TODAY (Rating): <span id="stat-today" style="color:var(--success)">0h 0m</span><br>
+                WEEKLY (Rating): <span id="stat-weekly" style="color:var(--warning)">0h 0m</span>
+            </div>
+            <div>
+                TRAINING TODAY: <span id="stat-training-today" class="training-today">0h 0m</span><br>
+                TRAINING WEEKLY: <span id="stat-training-weekly" class="training-weekly">0h 0m</span>
+            </div>
+            <div style="margin-top:5px;"><span style="font-size:0.7rem;">v2.1</span> <button id="devToggleBtn">🔧 Dev</button></div>
         </div>
     </div>
 
@@ -633,6 +797,14 @@
                     <span>hours</span>
                     <button onclick="setDailyGoal()">Set</button>
                 </div>
+            </div>
+            <div class="goal-mode-selector">
+                <span>Goal tracks:</span>
+                <select id="goalMode">
+                    <option value="rating">Rating</option>
+                    <option value="training">Training</option>
+                    <option value="combined">Combined</option>
+                </select>
             </div>
             <div class="progress-bar-bg"><div class="progress-fill" id="goalFill"></div></div>
             <div class="goal-stats">
@@ -669,11 +841,61 @@
                     <div class="slider-row"><div class="label-box">MC Effort <span id="v5">0.0</span></div><div class="description">Effort and care put into page.</div><input type="range" id="s5" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v5'); saveState();"></div>
                 </div>
 
+                <!-- Critical Flags & Freshness Card -->
+                <div class="card" style="margin-top:8px;">
+                    <div class="label-box">⚠️ Critical Flags</div>
+                    <div class="flag-group" id="flagGroup">
+                        <button class="flag-btn" data-flag="porn" onclick="toggleFlag('porn')">🔞 Porn</button>
+                        <button class="flag-btn" data-flag="foreign" onclick="toggleFlag('foreign')">🌐 Foreign</button>
+                        <button class="flag-btn" data-flag="dnl" onclick="toggleFlag('dnl')">❌ Did Not Load</button>
+                        <button class="flag-btn" data-flag="offensive" onclick="toggleFlag('offensive')">⚠️ Offensive</button>
+                    </div>
+                    <div id="dnlWarning" class="warning-badge" style="display: none;">⚠️ DNL active: Needs Met forced to 0 (FailsM) and PQ sliders disabled.</div>
+                    
+                    <div class="card-divider" style="margin: 12px 0;"></div>
+                    
+                    <div class="label-box">🕒 Freshness</div>
+                    <div class="check-row">
+                        <input type="checkbox" id="demandsFreshness" onchange="calculate(); saveState();">
+                        <label>Query Demands Freshness</label>
+                    </div>
+                    <div class="slider-row">
+                        <div class="label-box">Content Recency <span id="recencyVal">0%</span></div>
+                        <input type="range" id="recencySlider" min="0" max="100" step="1" value="0" oninput="updateRecency(); saveState();">
+                        <div class="description">0% = Years old / Outdated, 100% = Brand new / Up‑to‑date</div>
+                    </div>
+                    
+                    <div class="card-divider" style="margin: 12px 0;"></div>
+                    
+                    <div class="label-box">📄 PQ Modifiers</div>
+                    <div class="check-row">
+                        <input type="checkbox" id="misleadingTitle" onchange="calculate(); saveState();">
+                        <label>Misleading Title</label>
+                    </div>
+                    <div class="check-row">
+                        <input type="checkbox" id="distractingAds" onchange="calculate(); saveState();">
+                        <label>Distracting Ads / SC</label>
+                    </div>
+                    <div id="pqModifierWarning" class="warning-badge" style="display: none;">⚠️ PQ modifier active: PQ rating capped at Low+ (2.0).</div>
+                </div>
+
                 <span class="card-header-out" style="color:var(--nm)">Needs Met (0-5)</span>
                 <div class="card-divider" style="background:var(--nm)"></div>
                 <div class="card" style="border-left:4px solid var(--nm)">
                     <div class="label-box" style="color:var(--nm)">Utility / NM <span id="v6">0.0</span></div>
                     <input type="range" id="s6" min="0" max="5" step="0.1" value="0" oninput="upd(this, 'v6'); saveState();" style="accent-color: var(--nm);">
+                </div>
+
+                <!-- Interpretation card -->
+                <div class="interpretation-card card" style="margin-top:8px; background:#111827; border-left: 4px solid #fbbf24;">
+                    <div class="label-box">🎯 Query Interpretation Probability <span id="interpPercentDisplay">50%</span></div>
+                    <div class="description">Likelihood that users interpret the query this way. Affects maximum NM rating.</div>
+                    <input type="range" id="interpretationSlider" min="0" max="100" step="1" value="50" oninput="updateInterpretation(); saveState();">
+                    <div class="interp-info">
+                        <span id="interpCategoryLabel">Dominant Interpretation</span>
+                        <span id="maxNMCapLabel">Max NM Cap: 5.0</span>
+                    </div>
+                    <div class="description" style="margin-top: 6px;">📌 Minor (0-10%) → NM ≤ 2.0 | Common (11-49%) → NM ≤ 4.0 | Dominant (50-100%) → NM ≤ 5.0</div>
                 </div>
             </div>
 
@@ -704,12 +926,13 @@
                 <div class="card">
                     <div class="analytics-grid">
                         <div class="analytics-card-item"><div class="analytics-label">Tasks Completed</div><div class="analytics-value" id="ana-count">0</div></div>
-                        <div class="analytics-card-item"><div class="analytics-label">Total Time</div><div class="analytics-value" id="ana-spent">0m 0s</div></div>
-                        <div class="analytics-card-item"><div class="analytics-label">Avg Task Time</div><div class="analytics-value" id="ana-avg">0m 0s</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">Work Hours (Rating)</div><div class="analytics-value" id="work-hours">0h 0m</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">Training Hours</div><div class="analytics-value" id="training-hours">0h 0m</div></div>
                         <div class="analytics-card-item"><div class="analytics-label">⚡ Velocity (tasks/h)</div><div class="analytics-value" id="velocityValue">0.0</div></div>
                         <div class="analytics-card-item"><div class="analytics-label">📈 Efficiency % (actual vs AET)</div><div class="analytics-value" id="efficiencyValue">0.0%</div></div>
                         <div class="analytics-card-item"><div class="analytics-label">💰 Weekly Earnings</div><div class="analytics-value" id="weeklyearned">$0.00</div></div>
-                        <div class="analytics-card-item"><div class="analytics-label">💵 Today's Earnings</div><div class="analytics-value" id="dailyearned">$0.00</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">💵 Today's Rating Earnings</div><div class="analytics-value" id="dailyearned">$0.00</div></div>
+                        <div class="analytics-card-item"><div class="analytics-label">📘 Today's Training Earnings</div><div class="analytics-value" id="dailyTrainingEarned">$0.00</div></div>
                     </div>
                 </div>
             </div>
@@ -723,7 +946,20 @@
                 <button class="btn" style="background:var(--danger); color:white; font-size:0.65rem; padding:4px 10px;" onclick="wipe()">Wipe History</button>
             </div>
             <div class="history-table-card">
-                <table id="log-table"><thead><tr><th>Date</th><th>Time</th><th>Duration</th><th>Query</th><th>PQ</th><th>NM</th></tr></thead><tbody></tbody></table>
+                <table id="log-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Duration</th>
+                            <th>Query</th>
+                            <th>PQ</th>
+                            <th>NM</th>
+                            <th>Mode</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
         </div>
     </div>
@@ -732,7 +968,7 @@
 <div id="breakModal" class="break-modal">
     <div class="modal-card">
         <h2>🧘 Time to Stretch!</h2>
-        <p>You've reached 2 hours of rating. Stand up, walk around, rest your eyes.<br>This break reminder will reappear every 2 hours.</p>
+        <p>You've reached 2 hours of work in this mode. Stand up, walk around, rest your eyes.<br>This break reminder will reappear every 2 hours.</p>
         <button class="btn" style="background: var(--success);" onclick="resumeBreak()">Resume Session</button>
     </div>
 </div>
@@ -742,8 +978,13 @@
     let seconds = 0, timerInterval, isRunning = false;
     let alertPlayed = false;
     let audioCtx = null;
-    let lastBreakTrigger = 0;
+    let lastBreakTrigger = { rating: 0, training: 0 };
     let currentFilter = "";
+    let currentMode = "rating";
+    let goalMode = "rating";
+
+    // Flag states
+    let flags = { porn: false, foreign: false, dnl: false, offensive: false };
 
     // Helper functions
     function initAudio() { if (!audioCtx || audioCtx.state === 'closed') audioCtx = new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); return audioCtx; }
@@ -752,18 +993,111 @@
     function formatTimeHM(s) { let h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sc = s%60; return h > 0 ? `${h}h ${m}m ${sc}s` : `${m}m ${sc}s`; }
     function formatHMshort(sec) { let h = Math.floor(sec/3600); let m = Math.floor((sec%3600)/60); return h>0?`${h}h ${m}m`:`${m}m`; }
     
-    // Get local YYYY-MM-DD from a Date object
     function getLocalDateISO(date) {
         let year = date.getFullYear();
         let month = String(date.getMonth() + 1).padStart(2, '0');
         let day = String(date.getDate()).padStart(2, '0');
         return `${year}-${month}-${day}`;
     }
-    function getTodayLocalISO() {
-        return getLocalDateISO(new Date());
+    function getTodayLocalISO() { return getLocalDateISO(new Date()); }
+
+    // Mode switching
+    function setMode(mode) {
+        currentMode = mode;
+        localStorage.setItem('appMode', mode);
+        const isTraining = (mode === 'training');
+        const checkbox = document.getElementById('modeToggleCheckbox');
+        if (checkbox) checkbox.checked = isTraining;
+        document.getElementById('ratingLabel').classList.toggle('active', !isTraining);
+        document.getElementById('trainingLabel').classList.toggle('active', isTraining);
+        if (isTraining) document.body.classList.add('mode-training');
+        else document.body.classList.remove('mode-training');
+        calculate();
     }
 
-    // ----- Strict YMYL Validation -----
+    function initMode() {
+        const savedMode = localStorage.getItem('appMode');
+        setMode(savedMode === 'training' ? 'training' : 'rating');
+        const checkbox = document.getElementById('modeToggleCheckbox');
+        if (checkbox) checkbox.addEventListener('change', (e) => setMode(e.target.checked ? 'training' : 'rating'));
+    }
+
+    // Flag toggles
+    function toggleFlag(flagName) {
+        flags[flagName] = !flags[flagName];
+        const btn = document.querySelector(`.flag-btn[data-flag="${flagName}"]`);
+        if (btn) btn.classList.toggle('active', flags[flagName]);
+        const dnlWarning = document.getElementById('dnlWarning');
+        const pqSliders = ['s1','s2','s3','s4','s5'];
+        if (flagName === 'dnl') {
+            if (flags.dnl) {
+                dnlWarning.style.display = 'block';
+                pqSliders.forEach(id => {
+                    const slider = document.getElementById(id);
+                    slider.disabled = true;
+                    slider.style.opacity = '0.5';
+                });
+                const nmSlider = document.getElementById('s6');
+                nmSlider.value = 0;
+                document.getElementById('v6').innerText = '0.0';
+            } else {
+                dnlWarning.style.display = 'none';
+                pqSliders.forEach(id => {
+                    const slider = document.getElementById(id);
+                    slider.disabled = false;
+                    slider.style.opacity = '1';
+                });
+            }
+        }
+        calculate();
+        saveState();
+    }
+
+    function updateRecency() {
+        const slider = document.getElementById('recencySlider');
+        const val = slider.value;
+        document.getElementById('recencyVal').innerText = val + '%';
+        calculate();
+        saveState();
+    }
+
+    // --- Interpretation guardrail logic ---
+    function getInterpretationCap(prob) {
+        if (prob <= 10) return 2.0;
+        if (prob <= 49) return 4.0;
+        return 5.0;
+    }
+    function getInterpretationLabel(prob) {
+        if (prob <= 10) return "Minor Interpretation";
+        if (prob <= 49) return "Common Interpretation";
+        return "Dominant Interpretation";
+    }
+    function updateInterpretation() {
+        const slider = document.getElementById('interpretationSlider');
+        if (!slider) return;
+        let val = parseFloat(slider.value);
+        const cap = getInterpretationCap(val);
+        const label = getInterpretationLabel(val);
+        document.getElementById('interpPercentDisplay').innerText = val + "%";
+        document.getElementById('interpCategoryLabel').innerText = label;
+        document.getElementById('maxNMCapLabel').innerHTML = `Max NM Cap: ${cap.toFixed(1)}`;
+        const nmSlider = document.getElementById('s6');
+        const oldMax = parseFloat(nmSlider.max);
+        nmSlider.max = cap;
+        let currentNm = parseFloat(nmSlider.value);
+        if (currentNm > cap) {
+            nmSlider.value = cap;
+            document.getElementById('v6').innerText = cap.toFixed(1);
+            calculate();
+        }
+        if (cap < 4.99) nmSlider.style.accentColor = '#f59e0b';
+        else nmSlider.style.accentColor = '#3b82f6';
+        if (oldMax !== cap) calculate();
+        else if (currentNm <= cap) calculate();
+        saveState();
+    }
+
+    // YMYL and PQ rating functions
     function getRatingFromScore(score, isYMYL, trust) {
         if (isYMYL) {
             if (trust < 2.0) return "Lowest";
@@ -810,7 +1144,6 @@
     function viewBBB(){ let v=document.getElementById('res-url').value.trim(); if(!v) return alert("Enter URL/Entity."); let d=v.replace(/^(?:https?:\/\/)?(?:www\.)?/i,'').split('/')[0]; window.open('https://www.google.com/search?q=site:bbb.org+'+encodeURIComponent(`"${d}"`)); }
     function viewArchive(){ let v=document.getElementById('res-url').value.trim(); if(!v) return alert("Enter URL/Entity."); window.open(`https://web.archive.org/web/*/${encodeURIComponent(v)}`); }
     function updateYmylWarning() { const isYMYL = document.getElementById('ymyl').value === 'yes'; document.getElementById('ymylWarningBadge').style.display = isYMYL ? 'flex' : 'none'; saveState(); }
-    
     function updateSubmissionStatus() {
         let aetSec = parseFloat(document.getElementById('aet').value) * 60;
         let percent = (seconds / aetSec) * 100;
@@ -826,50 +1159,192 @@
             badge.innerText = "🔴 Not Ready (<75% AET)";
         }
     }
-    
+
+    // Main calculation with all constraints
     function calculate() {
+        if (flags.dnl) {
+            document.getElementById('s6').value = 0;
+            document.getElementById('v6').innerText = '0.0';
+            document.getElementById('out-nm').innerText = "FailsM";
+            document.getElementById('out-pq').innerText = "N/A (DNL)";
+            let justification = "DNL flag active: Page did not load. Needs Met = FailsM. No PQ rating.";
+            document.getElementById('just-box').value = justification;
+            return;
+        }
+
         const isYMYL = document.getElementById('ymyl').value === 'yes';
         let v = [1,2,3,4,5].map(i => parseFloat(document.getElementById('s'+i).value));
         let nmVal = parseFloat(document.getElementById('s6').value);
         let avg = v.reduce((a,b)=>a+b,0)/5;
         let trust = v[3];
         document.getElementById('t-container').className = isYMYL ? 'slider-row trust-glow' : 'slider-row';
-        let pq = getRatingFromScore(avg, isYMYL, trust);
-        document.getElementById('out-pq').innerText = pq;
-        let nm = "FailsM";
-        if (nmVal >= 4.8) nm = "Fully Meets";
-        else if (nmVal >= 4.2) nm = "Highly Meets+";
-        else if (nmVal >= 3.6) nm = "Highly Meets";
-        else if (nmVal >= 3.0) nm = "Moderately Meets+";
-        else if (nmVal >= 2.3) nm = "Moderately Meets";
-        else if (nmVal >= 1.5) nm = "Slightly Meets+";
-        else if (nmVal >= 0.8) nm = "Slightly Meets";
-        document.getElementById('out-nm').innerText = nm;
-        let justification = `PQ RATING: ${pq} | NEEDS MET: ${nm}\nYMYL MODE: ${isYMYL ? 'ACTIVE (strict)' : 'Standard'}\n\nE-E-A-T + Effort → Exp:${v[0].toFixed(1)} Exp:${v[1].toFixed(1)} Auth:${v[2].toFixed(1)} Trust:${trust.toFixed(1)} Effort:${v[4].toFixed(1)}\nAvg:${avg.toFixed(2)} NM:${nmVal.toFixed(1)}\nWhy "${pq}": ${isYMYL? (trust<2? 'Trust too low' : trust<3? 'Trust caps at Low+' : 'YMYL penalty') : (trust<1?'Trust<1 => Lowest': trust<2?'Trust<2 capped at Low':'Standard rules')}`;
+        let pqRaw = getRatingFromScore(avg, isYMYL, trust);
+        
+        const misleading = document.getElementById('misleadingTitle').checked;
+        const distracting = document.getElementById('distractingAds').checked;
+        const pqModifierActive = misleading || distracting;
+        const pqModifierWarning = document.getElementById('pqModifierWarning');
+        if (pqModifierActive) {
+            pqModifierWarning.style.display = 'block';
+            pqRaw = "Low+";
+        } else {
+            pqModifierWarning.style.display = 'none';
+        }
+        document.getElementById('out-pq').innerText = pqRaw;
+        
+        let effectiveNm = nmVal;
+        const demandsFresh = document.getElementById('demandsFreshness').checked;
+        const recency = parseInt(document.getElementById('recencySlider').value);
+        if (demandsFresh && recency < 50) {
+            if (effectiveNm > 2.0) effectiveNm = 2.0;
+        }
+        const interpSlider = document.getElementById('interpretationSlider');
+        let interpProb = interpSlider ? parseFloat(interpSlider.value) : 50;
+        const interpCap = getInterpretationCap(interpProb);
+        if (effectiveNm > interpCap) effectiveNm = interpCap;
+        
+        let nmDisplay = "FailsM";
+        if (effectiveNm >= 4.8) nmDisplay = "Fully Meets";
+        else if (effectiveNm >= 4.2) nmDisplay = "Highly Meets+";
+        else if (effectiveNm >= 3.6) nmDisplay = "Highly Meets";
+        else if (effectiveNm >= 3.0) nmDisplay = "Moderately Meets+";
+        else if (effectiveNm >= 2.3) nmDisplay = "Moderately Meets";
+        else if (effectiveNm >= 1.5) nmDisplay = "Slightly Meets+";
+        else if (effectiveNm >= 0.8) nmDisplay = "Slightly Meets";
+        else nmDisplay = "FailsM";
+        document.getElementById('out-nm').innerText = nmDisplay;
+        
+        let justification = `PQ RATING: ${pqRaw} | NEEDS MET: ${nmDisplay}\nYMYL MODE: ${isYMYL ? 'ACTIVE (strict)' : 'Standard'}\n\nE-E-A-T + Effort → Exp:${v[0].toFixed(1)} Exp:${v[1].toFixed(1)} Auth:${v[2].toFixed(1)} Trust:${trust.toFixed(1)} Effort:${v[4].toFixed(1)}\nAvg:${avg.toFixed(2)} NM:${effectiveNm.toFixed(1)}\nWhy "${pqRaw}": ${isYMYL? (trust<2? 'Trust too low' : trust<3? 'Trust caps at Low+' : 'YMYL penalty') : (trust<1?'Trust<1 => Lowest': trust<2?'Trust<2 capped at Low':'Standard rules')}`;
+        
+        let activeFlags = Object.keys(flags).filter(f => flags[f]);
+        if (activeFlags.length) justification += `\n\nFlags: ${activeFlags.join(', ')}`;
+        if (flags.dnl) justification += `\nDNL active: Page did not load. NM forced to FailsM.`;
+        if (demandsFresh && recency < 50) justification += `\nFreshness constraint: Query demands fresh results but recency = ${recency}% → NM capped at 2.0 (Slightly Meets).`;
+        if (pqModifierActive) justification += `\nPQ Modifier: ${misleading ? 'Misleading Title' : ''}${misleading && distracting ? ' + ' : ''}${distracting ? 'Distracting Ads/SC' : ''} → PQ capped at Low+.`;
+        
+        const interpLabel = getInterpretationLabel(interpProb);
+        justification += `\n\nQuery Interpretation: ${interpProb}% (${interpLabel}) → NM capped at ${interpCap.toFixed(1)}`;
         document.getElementById('just-box').value = justification;
     }
-    
+
+    // History & persistence
     function renderFilteredHistory() {
         let logs = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
         let searchTerm = document.getElementById('historySearch')?.value.toLowerCase() || "";
         let filtered = logs.filter(l => !l._temp && (searchTerm === "" || l.query?.toLowerCase().includes(searchTerm) || (l.notes || "").toLowerCase().includes(searchTerm)));
         let tbody = document.querySelector('#log-table tbody');
-        tbody.innerHTML = filtered.map(l=>`<tr><td style="padding:10px;">${escapeHtml(l.date)}</td><td style="padding:10px;">${escapeHtml(l.time||'--')}</td><td style="padding:10px;">${escapeHtml(l.duration)}</td><td style="padding:10px;">${escapeHtml(l.query)}</td><td style="padding:10px;">${escapeHtml(l.pq)}</td><td style="padding:10px;">${escapeHtml(l.nm)}</td></tr>`).join('');
+        tbody.innerHTML = filtered.map(l=>`<tr><td style="padding:10px;">${escapeHtml(l.date)}</td><td style="padding:10px;">${escapeHtml(l.time||'--')}</td><td style="padding:10px;">${escapeHtml(l.duration)}</td><td style="padding:10px;">${escapeHtml(l.query)}</td><td style="padding:10px;">${escapeHtml(l.pq)}</td><td style="padding:10px;">${escapeHtml(l.nm)}</td><td style="padding:10px;">${escapeHtml(l.mode || 'rating')}</td>`).join('');
     }
     
     function saveState() {
-        let state={ s1:document.getElementById('s1').value,s2:document.getElementById('s2').value,s3:document.getElementById('s3').value,s4:document.getElementById('s4').value,s5:document.getElementById('s5').value,s6:document.getElementById('s6').value, query:document.getElementById('q-name').value, ymyl:document.getElementById('ymyl').value, aet:document.getElementById('aet').value, notes:document.getElementById('internalNotes').value, seconds:seconds, isRunning:isRunning };
-        localStorage.setItem('raterDashboardState',JSON.stringify(state));
+        let state = {
+            s1: document.getElementById('s1').value,
+            s2: document.getElementById('s2').value,
+            s3: document.getElementById('s3').value,
+            s4: document.getElementById('s4').value,
+            s5: document.getElementById('s5').value,
+            s6: document.getElementById('s6').value,
+            query: document.getElementById('q-name').value,
+            ymyl: document.getElementById('ymyl').value,
+            aet: document.getElementById('aet').value,
+            notes: document.getElementById('internalNotes').value,
+            seconds: seconds,
+            isRunning: isRunning,
+            interp: document.getElementById('interpretationSlider') ? document.getElementById('interpretationSlider').value : 50,
+            flags: flags,
+            demandsFreshness: document.getElementById('demandsFreshness').checked,
+            recency: document.getElementById('recencySlider').value,
+            misleadingTitle: document.getElementById('misleadingTitle').checked,
+            distractingAds: document.getElementById('distractingAds').checked,
+            goalMode: goalMode
+        };
+        localStorage.setItem('raterDashboardState', JSON.stringify(state));
     }
     
     function restoreState() {
-        let saved=localStorage.getItem('raterDashboardState');
-        if(saved){ try{ let s=JSON.parse(saved); ['s1','s2','s3','s4','s5','s6'].forEach(id=>{ if(s[id]) document.getElementById(id).value=s[id]; upd(document.getElementById(id),id.replace('s','v')); }); if(s.query) document.getElementById('q-name').value=s.query; if(s.ymyl) document.getElementById('ymyl').value=s.ymyl; if(s.aet) document.getElementById('aet').value=s.aet; if(s.notes) document.getElementById('internalNotes').value=s.notes; seconds=s.seconds||0; document.getElementById('timer-display').innerText=formatHMS(seconds); if(s.isRunning) startTimer(); else { isRunning=false; if(timerInterval) clearInterval(timerInterval); } updateYmylWarning(); calculate(); updateSubmissionStatus(); }catch(e){} }
+        let saved = localStorage.getItem('raterDashboardState');
+        if (saved) {
+            try {
+                let s = JSON.parse(saved);
+                ['s1','s2','s3','s4','s5','s6'].forEach(id => {
+                    if (s[id]) document.getElementById(id).value = s[id];
+                    upd(document.getElementById(id), id.replace('s','v'));
+                });
+                if (s.query) document.getElementById('q-name').value = s.query;
+                if (s.ymyl) document.getElementById('ymyl').value = s.ymyl;
+                if (s.aet) document.getElementById('aet').value = s.aet;
+                if (s.notes) document.getElementById('internalNotes').value = s.notes;
+                if (s.interp !== undefined && document.getElementById('interpretationSlider')) document.getElementById('interpretationSlider').value = s.interp;
+                if (s.flags) {
+                    flags = s.flags;
+                    for (let f in flags) {
+                        const btn = document.querySelector(`.flag-btn[data-flag="${f}"]`);
+                        if (btn) btn.classList.toggle('active', flags[f]);
+                    }
+                    if (flags.dnl) {
+                        document.getElementById('dnlWarning').style.display = 'block';
+                        ['s1','s2','s3','s4','s5'].forEach(id => {
+                            const slider = document.getElementById(id);
+                            slider.disabled = true;
+                            slider.style.opacity = '0.5';
+                        });
+                    } else {
+                        document.getElementById('dnlWarning').style.display = 'none';
+                        ['s1','s2','s3','s4','s5'].forEach(id => {
+                            const slider = document.getElementById(id);
+                            slider.disabled = false;
+                            slider.style.opacity = '1';
+                        });
+                    }
+                }
+                if (s.demandsFreshness !== undefined) document.getElementById('demandsFreshness').checked = s.demandsFreshness;
+                if (s.recency !== undefined) {
+                    document.getElementById('recencySlider').value = s.recency;
+                    document.getElementById('recencyVal').innerText = s.recency + '%';
+                }
+                if (s.misleadingTitle !== undefined) document.getElementById('misleadingTitle').checked = s.misleadingTitle;
+                if (s.distractingAds !== undefined) document.getElementById('distractingAds').checked = s.distractingAds;
+                if (s.goalMode) {
+                    goalMode = s.goalMode;
+                    document.getElementById('goalMode').value = goalMode;
+                }
+                seconds = s.seconds || 0;
+                document.getElementById('timer-display').innerText = formatHMS(seconds);
+                if (s.isRunning) startTimer();
+                else { isRunning = false; if (timerInterval) clearInterval(timerInterval); }
+                updateYmylWarning();
+                if (document.getElementById('interpretationSlider')) updateInterpretation();
+                calculate();
+                updateSubmissionStatus();
+            } catch(e) {}
+        }
         let lastJust = localStorage.getItem('lastJustificationText');
-        if(lastJust) document.getElementById('lastJustBox').value = lastJust;
+        if (lastJust) document.getElementById('lastJustBox').value = lastJust;
     }
     
-    function startTimer() { if(!isRunning){ initAudio(); isRunning=true; if(timerInterval) clearInterval(timerInterval); timerInterval=setInterval(()=>{ seconds++; document.getElementById('timer-display').innerText=formatHMS(seconds); let aetVal=parseFloat(document.getElementById('aet').value)*60; if(aetVal-seconds<=30 && aetVal-seconds>0){ document.getElementById('timer-display').style.color='var(--danger)'; if(!alertPlayed){ playAlert(); alertPlayed=true; } } else if(seconds>=aetVal) document.getElementById('timer-display').style.color='var(--danger)'; else document.getElementById('timer-display').style.color='var(--success)'; updateSubmissionStatus(); saveState(); checkBreakThreshold(getTotalTodaySecIncludingCurrent()); },1000); } }
+    function startTimer() { 
+        if(!isRunning){ 
+            initAudio(); 
+            isRunning=true; 
+            if(timerInterval) clearInterval(timerInterval); 
+            timerInterval=setInterval(()=>{ 
+                seconds++; 
+                document.getElementById('timer-display').innerText=formatHMS(seconds); 
+                let aetVal=parseFloat(document.getElementById('aet').value)*60; 
+                if(aetVal-seconds<=30 && aetVal-seconds>0){ 
+                    document.getElementById('timer-display').style.color='var(--danger)'; 
+                    if(!alertPlayed){ playAlert(); alertPlayed=true; } 
+                } else if(seconds>=aetVal) 
+                    document.getElementById('timer-display').style.color='var(--danger)'; 
+                else 
+                    document.getElementById('timer-display').style.color='var(--success)'; 
+                updateSubmissionStatus(); 
+                saveState(); 
+                checkBreakThreshold(getCurrentModeTotalTodaySec()); 
+            },1000); 
+        } 
+    }
+    
     function pauseTimer() { clearInterval(timerInterval); isRunning=false; saveState(); updateSubmissionStatus(); }
     
     function finishAndLog() {
@@ -896,7 +1371,13 @@
             sec: seconds,
             notes: document.getElementById('internalNotes').value,
             justification: justificationText,
-            aetSec: aetSec
+            aetSec: aetSec,
+            mode: currentMode,
+            flags: { ...flags },
+            demandsFreshness: document.getElementById('demandsFreshness').checked,
+            recency: parseInt(document.getElementById('recencySlider').value),
+            misleadingTitle: document.getElementById('misleadingTitle').checked,
+            distractingAds: document.getElementById('distractingAds').checked
         };
         logs.unshift(logEntry);
         localStorage.setItem('raterLog_v9', JSON.stringify(logs));
@@ -909,6 +1390,25 @@
         document.getElementById('q-name').value="";
         ['s1','s2','s3','s4','s5','s6'].forEach(id=>{ document.getElementById(id).value=0; upd(document.getElementById(id),id.replace('s','v')); });
         document.getElementById('internalNotes').value="";
+        // Reset all controls
+        flags = { porn: false, foreign: false, dnl: false, offensive: false };
+        document.querySelectorAll('.flag-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById('dnlWarning').style.display = 'none';
+        ['s1','s2','s3','s4','s5'].forEach(id => {
+            const slider = document.getElementById(id);
+            slider.disabled = false;
+            slider.style.opacity = '1';
+        });
+        document.getElementById('demandsFreshness').checked = false;
+        document.getElementById('recencySlider').value = 0;
+        document.getElementById('recencyVal').innerText = '0%';
+        document.getElementById('misleadingTitle').checked = false;
+        document.getElementById('distractingAds').checked = false;
+        document.getElementById('pqModifierWarning').style.display = 'none';
+        if (document.getElementById('interpretationSlider')) {
+            document.getElementById('interpretationSlider').value = 0;
+            updateInterpretation();
+        }
         calculate(); saveState(); renderTableAndStats(); updateSubmissionStatus();
         alert("✅ Task logged, justification copied.");
     }
@@ -921,7 +1421,10 @@
         let nowDate = new Date();
         let oneWeekAgo = new Date();
         oneWeekAgo.setDate(nowDate.getDate() - 7);
-        let todaySec = 0, weeklySec = 0, totalSec = 0, totalExpectedSec = 0, taskCount = 0;
+        let workSec = 0, trainingSec = 0, totalSec = 0, totalExpectedSec = 0, taskCount = 0;
+        let weeklyEarnedSecRating = 0, dailyEarnedSecRating = 0;
+        let weeklyEarnedSecTraining = 0, dailyEarnedSecTraining = 0;
+        
         logs.forEach(l => {
             if(l._temp) return;
             let secs = l.sec || 0;
@@ -929,85 +1432,103 @@
             totalSec += secs;
             totalExpectedSec += expected;
             taskCount++;
-            // Use localDateISO if available, else try to derive from date field (fallback)
+            let mode = l.mode || 'rating';
+            if (mode === 'rating') workSec += secs;
+            else trainingSec += secs;
+            
             let entryLocalDate = l.localDateISO;
             if (!entryLocalDate && l.date) {
-                // attempt to parse local date string (browser dependent, but better than nothing)
                 let parts = l.date.split('/');
                 if (parts.length === 3) {
                     let maybeDate = new Date(parts[2], parts[0]-1, parts[1]);
                     if (!isNaN(maybeDate)) entryLocalDate = getLocalDateISO(maybeDate);
                 }
             }
-            if (entryLocalDate === todayLocalISO) todaySec += secs;
-            // weekly: compare using local date objects
-            if (entryLocalDate) {
-                let entryDateObj = new Date(entryLocalDate + 'T12:00:00');
-                if (!isNaN(entryDateObj) && entryDateObj >= oneWeekAgo) weeklySec += secs;
+            if (mode === 'rating') {
+                if (entryLocalDate === todayLocalISO) dailyEarnedSecRating += secs;
+                if (entryLocalDate) {
+                    let entryDateObj = new Date(entryLocalDate + 'T12:00:00');
+                    if (!isNaN(entryDateObj) && entryDateObj >= oneWeekAgo) weeklyEarnedSecRating += secs;
+                }
             } else {
-                // fallback to old method
-                let entryDateObj = new Date(l.date);
-                if (!isNaN(entryDateObj) && entryDateObj >= oneWeekAgo) weeklySec += secs;
+                if (entryLocalDate === todayLocalISO) dailyEarnedSecTraining += secs;
+                if (entryLocalDate) {
+                    let entryDateObj = new Date(entryLocalDate + 'T12:00:00');
+                    if (!isNaN(entryDateObj) && entryDateObj >= oneWeekAgo) weeklyEarnedSecTraining += secs;
+                }
             }
         });
-        document.getElementById('stat-today').innerText = formatTimeHM(todaySec);
-        document.getElementById('stat-weekly').innerText = formatTimeHM(weeklySec);
+        
+        // Header stats
+        document.getElementById('stat-today').innerText = formatTimeHM(dailyEarnedSecRating);
+        document.getElementById('stat-weekly').innerText = formatTimeHM(weeklyEarnedSecRating);
+        document.getElementById('stat-training-today').innerText = formatTimeHM(dailyEarnedSecTraining);
+        document.getElementById('stat-training-weekly').innerText = formatTimeHM(weeklyEarnedSecTraining);
+        
         document.getElementById('ana-count').innerText = taskCount;
-        document.getElementById('ana-spent').innerText = formatTimeHM(totalSec);
+        document.getElementById('work-hours').innerText = formatTimeHM(workSec);
+        document.getElementById('training-hours').innerText = formatTimeHM(trainingSec);
         let avgSec = taskCount ? Math.floor(totalSec/taskCount) : 0;
-        document.getElementById('ana-avg').innerText = formatTimeHM(avgSec);
         let velocity = totalSec>0 ? (taskCount / (totalSec/3600)).toFixed(1) : "0.0";
         document.getElementById('velocityValue').innerText = velocity;
         let efficiency = totalExpectedSec>0 ? ((totalSec / totalExpectedSec)*100).toFixed(1) : "0.0";
         document.getElementById('efficiencyValue').innerText = efficiency+"%";
-        let targetSec = (parseFloat(localStorage.getItem('dailyGoalHours')||'6')*3600);
-        let percent = Math.min(100, (todaySec/targetSec)*100);
-        document.getElementById('goalFill').style.width = `${percent}%`;
-        document.getElementById('todayProgressText').innerText = formatHMshort(todaySec);
-        updateGoalDisplay();
-        if(todaySec >= targetSec && targetSec>0) document.getElementById('goalEmoji').innerHTML = "✅ Goal met! 🎉";
-        else document.getElementById('goalEmoji').innerHTML = "⚡";
-        checkBreakThreshold(todaySec);
-        updateEarnings();
-    }
-
-    function updateEarnings() {
-        const logs = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
-        const todayLocalISO = getTodayLocalISO();
-        const now = new Date();
-        const oneWeekAgo = new Date();
-        oneWeekAgo.setDate(now.getDate() - 7);
-        let weeklySecs = 0, dailySecs = 0;
-        logs.forEach(log => {
-            if (log._temp) return;
-            let secs = log.sec || 0;
-            let entryLocalDate = log.localDateISO;
-            if (!entryLocalDate && log.date) {
-                let parts = log.date.split('/');
-                if (parts.length === 3) {
-                    let maybeDate = new Date(parts[2], parts[0]-1, parts[1]);
-                    if (!isNaN(maybeDate)) entryLocalDate = getLocalDateISO(maybeDate);
-                }
-            }
-            if (entryLocalDate === todayLocalISO) dailySecs += secs;
-            if (entryLocalDate) {
-                let entryDateObj = new Date(entryLocalDate + 'T12:00:00');
-                if (!isNaN(entryDateObj) && entryDateObj >= oneWeekAgo) weeklySecs += secs;
-            }
-        });
+        
         const rate = 14;
-        const weeklyEarned = (weeklySecs / 3600) * rate;
-        const dailyEarned = (dailySecs / 3600) * rate;
-        document.getElementById('weeklyearned').textContent = `$${weeklyEarned.toFixed(2)}`;
-        document.getElementById('dailyearned').textContent = `$${dailyEarned.toFixed(2)}`;
+        const weeklyEarnedTotal = ((weeklyEarnedSecRating + weeklyEarnedSecTraining) / 3600) * rate;
+        const dailyEarnedRating = (dailyEarnedSecRating / 3600) * rate;
+        const dailyEarnedTraining = (dailyEarnedSecTraining / 3600) * rate;
+        document.getElementById('weeklyearned').textContent = `$${weeklyEarnedTotal.toFixed(2)}`;
+        document.getElementById('dailyearned').textContent = `$${dailyEarnedRating.toFixed(2)}`;
+        document.getElementById('dailyTrainingEarned').textContent = `$${dailyEarnedTraining.toFixed(2)}`;
+        
+        // Goal tracking
+        let goalSec = 0;
+        if (goalMode === 'rating') goalSec = dailyEarnedSecRating;
+        else if (goalMode === 'training') goalSec = dailyEarnedSecTraining;
+        else goalSec = dailyEarnedSecRating + dailyEarnedSecTraining;
+        
+        let targetSec = (parseFloat(localStorage.getItem('dailyGoalHours')||'6')*3600);
+        let percent = Math.min(100, (goalSec / targetSec) * 100);
+        document.getElementById('goalFill').style.width = `${percent}%`;
+        document.getElementById('todayProgressText').innerText = formatHMshort(goalSec);
+        updateGoalDisplay();
+        if(goalSec >= targetSec && targetSec>0) document.getElementById('goalEmoji').innerHTML = "✅ Goal met! 🎉";
+        else document.getElementById('goalEmoji').innerHTML = "⚡";
+        
+        // Break alert check
+        checkBreakThreshold(getCurrentModeTotalTodaySec());
     }
 
-    function wipe() { if(confirm("Wipe all history?")){ localStorage.removeItem('raterLog_v9'); renderTableAndStats(); } }
+    function wipe() { 
+        if(confirm("Wipe all history?")){ 
+            localStorage.removeItem('raterLog_v9'); 
+            renderTableAndStats();
+            setMode('rating');
+            flags = { porn: false, foreign: false, dnl: false, offensive: false };
+            document.querySelectorAll('.flag-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('dnlWarning').style.display = 'none';
+            ['s1','s2','s3','s4','s5'].forEach(id => {
+                const slider = document.getElementById(id);
+                slider.disabled = false;
+                slider.style.opacity = '1';
+            });
+            document.getElementById('demandsFreshness').checked = false;
+            document.getElementById('recencySlider').value = 0;
+            document.getElementById('recencyVal').innerText = '0%';
+            document.getElementById('misleadingTitle').checked = false;
+            document.getElementById('distractingAds').checked = false;
+            document.getElementById('pqModifierWarning').style.display = 'none';
+            goalMode = 'rating';
+            document.getElementById('goalMode').value = 'rating';
+            calculate();
+        } 
+    }
     
     async function exportCSV() {
         let logs = JSON.parse(localStorage.getItem('raterLog_v9'))||[];
         if(!logs.length) return alert("No data");
-        let headers = ["Date","LocalDateISO","Time","Duration","Query","PQ","NM","Notes","Justification","AET_sec"];
+        let headers = ["Date","LocalDateISO","Time","Duration","Query","PQ","NM","Notes","Justification","AET_sec","Mode","Flags","DemandsFreshness","Recency","MisleadingTitle","DistractingAds"];
         let rows = [headers];
         logs.forEach(l=>{
             rows.push([
@@ -1020,7 +1541,13 @@
                 `"${l.nm}"`,
                 `"${(l.notes||'').replace(/"/g,'""')}"`,
                 `"${(l.justification||'').replace(/"/g,'""')}"`,
-                l.aetSec||300
+                l.aetSec||300,
+                `"${l.mode || 'rating'}"`,
+                `"${JSON.stringify(l.flags || {})}"`,
+                l.demandsFreshness ? 'Yes' : 'No',
+                l.recency || 50,
+                l.misleadingTitle ? 'Yes' : 'No',
+                l.distractingAds ? 'Yes' : 'No'
             ]);
         });
         let csv = rows.map(r=>r.join(",")).join("\n");
@@ -1086,6 +1613,12 @@
             let nmIdx = headers.indexOf('nm');
             let notesIdx = headers.indexOf('notes');
             let justIdx = headers.indexOf('justification');
+            let modeIdx = headers.indexOf('mode');
+            let flagsIdx = headers.indexOf('flags');
+            let demandsIdx = headers.indexOf('demandsfreshness');
+            let recencyIdx = headers.indexOf('recency');
+            let misleadingIdx = headers.indexOf('misleadingtitle');
+            let distractingIdx = headers.indexOf('distractingads');
             if(dateIdx === -1 || durIdx === -1) return alert("Need Date & Duration columns");
             let imported = [];
             for(let i=1;i<rows.length;i++){
@@ -1101,13 +1634,21 @@
                 if(localDateISOIdx !== -1 && r[localDateISOIdx]) {
                     localDateISO = r[localDateISOIdx];
                 } else {
-                    // try to parse local date string
                     let partsDate = dateStr.split('/');
                     if(partsDate.length === 3) {
                         let parsedDate = new Date(partsDate[2], partsDate[0]-1, partsDate[1]);
                         if(!isNaN(parsedDate)) localDateISO = getLocalDateISO(parsedDate);
                     }
                 }
+                let mode = (modeIdx !== -1 && r[modeIdx]) ? r[modeIdx] : 'rating';
+                let flagsObj = {};
+                if (flagsIdx !== -1 && r[flagsIdx]) {
+                    try { flagsObj = JSON.parse(r[flagsIdx]); } catch(e) {}
+                }
+                let demands = (demandsIdx !== -1 && r[demandsIdx] && r[demandsIdx].toLowerCase() === 'yes');
+                let recency = (recencyIdx !== -1 && r[recencyIdx]) ? parseInt(r[recencyIdx]) : 50;
+                let misleading = (misleadingIdx !== -1 && r[misleadingIdx] && r[misleadingIdx].toLowerCase() === 'yes');
+                let distracting = (distractingIdx !== -1 && r[distractingIdx] && r[distractingIdx].toLowerCase() === 'yes');
                 imported.push({
                     date: dateStr,
                     localDateISO: localDateISO,
@@ -1119,7 +1660,13 @@
                     sec: secs || 0,
                     notes: (notesIdx !== -1 && r[notesIdx]) ? r[notesIdx] : "",
                     justification: (justIdx !== -1 && r[justIdx]) ? r[justIdx] : "",
-                    aetSec: aetVal
+                    aetSec: aetVal,
+                    mode: mode,
+                    flags: flagsObj,
+                    demandsFreshness: demands,
+                    recency: recency,
+                    misleadingTitle: misleading,
+                    distractingAds: distracting
                 });
             }
             if(imported.length){
@@ -1138,22 +1685,63 @@
     function updateGoalDisplay(){ let goal=parseFloat(localStorage.getItem('dailyGoalHours')||'6'); document.getElementById('goalTargetText').innerText=`${goal.toFixed(1)}h`; document.getElementById('dailyGoalHours').value=goal; }
     function jumpTo159(){ seconds=7140; document.getElementById('timer-display').innerText=formatHMS(seconds); alertPlayed=false; saveState(); updateSubmissionStatus(); alert("⏩ 1:59:00"); }
     function warp30s(){ let aetSec=parseFloat(document.getElementById('aet').value)*60; seconds=Math.max(0,aetSec-30); document.getElementById('timer-display').innerText=formatHMS(seconds); alertPlayed=false; saveState(); updateSubmissionStatus(); }
-    function mockLoad(){ document.getElementById('s1').value=4.0; upd(document.getElementById('s1'),'v1'); document.getElementById('s2').value=3.5; upd(document.getElementById('s2'),'v2'); document.getElementById('s3').value=4.2; upd(document.getElementById('s3'),'v3'); document.getElementById('s4').value=4.5; upd(document.getElementById('s4'),'v4'); document.getElementById('s5').value=4.0; upd(document.getElementById('s5'),'v5'); document.getElementById('s6').value=4.2; upd(document.getElementById('s6'),'v6'); document.getElementById('q-name').value="Mock: Organic Skincare"; document.getElementById('ymyl').value="yes"; document.getElementById('aet').value="5"; updateYmylWarning(); calculate(); saveState(); updateSubmissionStatus(); }
-    function getTotalTodaySecIncludingCurrent() {
+    function mockLoad(){ 
+        document.getElementById('s1').value=4.0; upd(document.getElementById('s1'),'v1');
+        document.getElementById('s2').value=3.5; upd(document.getElementById('s2'),'v2');
+        document.getElementById('s3').value=4.2; upd(document.getElementById('s3'),'v3');
+        document.getElementById('s4').value=4.5; upd(document.getElementById('s4'),'v4');
+        document.getElementById('s5').value=4.0; upd(document.getElementById('s5'),'v5');
+        document.getElementById('s6').value=4.2; upd(document.getElementById('s6'),'v6');
+        document.getElementById('q-name').value="Mock: Organic Skincare";
+        document.getElementById('ymyl').value="yes";
+        document.getElementById('aet').value="5";
+        updateYmylWarning();
+        if(document.getElementById('interpretationSlider')) updateInterpretation();
+        calculate();
+        saveState();
+        updateSubmissionStatus();
+    }
+    
+    function getCurrentModeTotalTodaySec() {
         let logs = JSON.parse(localStorage.getItem('raterLog_v9')) || [];
         let todayLocalISO = getTodayLocalISO();
-        let total = logs.filter(l => !l._temp && (l.localDateISO === todayLocalISO)).reduce((sum,l)=>sum+(l.sec||0),0);
-        if (isRunning || seconds>0) total += seconds;
+        let total = logs.filter(l => !l._temp && (l.localDateISO === todayLocalISO) && (l.mode === currentMode))
+                        .reduce((sum, l) => sum + (l.sec || 0), 0);
+        if (isRunning || seconds > 0) total += seconds;
         return total;
     }
-    function checkBreakThreshold(cumulativeSec) { let breakInt=7200; let block=Math.floor(cumulativeSec/breakInt); if(cumulativeSec>=breakInt && block>lastBreakTrigger) { lastBreakTrigger=block; showBreakModal(); } }
+
+    function checkBreakThreshold(cumulativeSec) {
+        let breakInt = 7200;
+        let block = Math.floor(cumulativeSec / breakInt);
+        if (cumulativeSec >= breakInt && block > lastBreakTrigger[currentMode]) {
+            lastBreakTrigger[currentMode] = block;
+            showBreakModal();
+        }
+    }
+    
     function showBreakModal() { playAlert(); document.getElementById('breakModal').style.visibility='visible'; }
     function resumeBreak() { document.getElementById('breakModal').style.visibility='hidden'; renderTableAndStats(); }
 
     document.addEventListener('keydown',(e)=>{ if(e.code==='Space'){ e.preventDefault(); isRunning?pauseTimer():startTimer(); } else if(e.code==='Enter'){ let tag=document.activeElement?.tagName; if(tag==='TEXTAREA'||(tag==='INPUT'&&document.activeElement?.type!=='text')) return; e.preventDefault(); finishAndLog(); } });
     document.getElementById('devToggleBtn').addEventListener('click',()=>{ let p=document.getElementById('devPanel'); p.style.display=p.style.display==='none'?'block':'none'; });
     document.getElementById('historySearch').addEventListener('input', () => renderFilteredHistory());
-    window.onload=()=>{ restoreState(); loadGoal(); renderTableAndStats(); calculate(); updateYmylWarning(); updateSubmissionStatus(); };
+    
+    document.getElementById('goalMode').addEventListener('change', (e) => {
+        goalMode = e.target.value;
+        saveState();
+        renderTableAndStats();
+    });
+    
+    window.onload=()=>{ 
+        initMode(); 
+        restoreState(); 
+        loadGoal(); 
+        renderTableAndStats(); 
+        calculate(); 
+        updateYmylWarning(); 
+        updateSubmissionStatus(); 
+    };
     window.addEventListener('beforeunload', (e) => { saveState(); });
     document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveState(); });
     document.body.addEventListener('click',()=>{ if(audioCtx&&audioCtx.state==='suspended') audioCtx.resume(); },{once:true});
